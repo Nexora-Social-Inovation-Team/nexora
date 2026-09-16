@@ -4,11 +4,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "echo \"nexora-api: stub, no sources yet\"",
-    "test": "echo \"nexora-api: stub, no tests yet\""
+    "dev": "bun --env-file=../../.env --watch src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "bun --env-file=../../.env x prisma migrate deploy",
+    "db:generate": "bun --env-file=../../.env x prisma generate"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.2",
+    "@nexora/score": "workspace:*",
     "@nexora/shared": "workspace:*",
-    "@nexora/score": "workspace:*"
+    "@prisma/client": "^6",
+    "elysia": "^1.4.30",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "prisma": "^6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

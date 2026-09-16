@@ -1,0 +1,107 @@
+// NEXORA data model — docs/ARCHITECTURE.md "Data model (Prisma sketch)".
+// Privacy contract: no url, hostname, path or rawContent column may ever exist here.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  youth
+  parent
+  teacher
+  admin
+}
+
+enum AccountStatus {
+  pending_parent_consent
+  active
+  revoked
+}
+
+enum TaskStatus {
+  open
+  completed
+}
+
+model User {
+  id          String        @id
+  role        Role
+  status      AccountStatus @default(pending_parent_consent)
+  displayName String
+  personaKey  String? // demo only: deniz_balanced | deniz_risky | deniz_productive
+  parentId    String?
+  parent      User?         @relation("ParentChildren", fields: [parentId], references: [id])
+  children    User[]        @relation("ParentChildren")
+
+  summaries CategorySummary[]
+  scores    Score[]
+  tasks     Task[]
+  consents  ConsentEvent[]    @relation("YouthConsent")
+}
+
+model ConsentEvent {
+  id        String   @id @default(cuid())
+  youthId   String
+  youth     User     @relation("YouthConsent", fields: [youthId], references: [id])
+  actorId   String
+  action    String // approve | revoke
+  createdAt DateTime @default(now())
+}
+
+model CategorySummary {
+  id          String   @id @default(cuid())
+  youthId     String
+  youth       User     @relation(fields: [youthId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  minutes     Json // CategoryMinutes — validated in app
+  createdAt   DateTime @default(now())
+
+  @@unique([youthId, periodStart, periodEnd])
+}
+
+model Score {
+  id          String   @id @default(cuid())
+  youthId     String
+  youth       User     @relation(fields: [youthId], references: [id])
+  value       Int // 0-100
+  reasons     Json // string[3]
+  periodStart DateTime
+  periodEnd   DateTime
+  computedAt  DateTime @default(now())
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  youthId     String
+  youth       User       @relation(fields: [youthId], references: [id])
+  title       String
+  steps       Json
+  etaMinutes  Int
+  status      TaskStatus @default(open)
+  badge       String?
+  completedAt DateTime?
+}
+
+model CoachRecommendation {
+  id        String   @id @default(cuid())
+  youthId   String
+  tips      Json // string[3]
+  shareText String
+  taskId    String?
+  source    String // model | fallback
+  createdAt DateTime @default(now())
+}
+
+model DeletionRequest {
+  id        String   @id @default(cuid())
+  youthId   String
+  status    String // pending | completed
+  createdAt DateTime @default(now())
+}

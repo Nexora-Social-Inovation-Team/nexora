@@ -1,0 +1,13 @@
+{
+  "name": "nexora-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "echo \"nexora-extension: stub, no sources yet\"",
+    "test": "echo \"nexora-extension: stub, no tests yet\""
+  },
+  "dependencies": {
+    "@nexora/shared": "workspace:*"
+  }
+}

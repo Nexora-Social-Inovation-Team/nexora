@@ -1,0 +1,14 @@
+{
+  "name": "nexora-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "echo \"nexora-api: stub, no sources yet\"",
+    "test": "echo \"nexora-api: stub, no tests yet\""
+  },
+  "dependencies": {
+    "@nexora/shared": "workspace:*",
+    "@nexora/score": "workspace:*"
+  }
+}

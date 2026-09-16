@@ -3,3 +3,9 @@
 !.env.example
 node_modules/
 .claude/worktrees/
+dist/
+build/
+.turbo/
+.expo/
+playwright-report/
+test-results/

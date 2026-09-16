@@ -19,7 +19,18 @@ This repository is in a **docs-first** state. Product decisions are distilled fr
 
 **A — Competition MVP.** One demo path: youth app → parent consent → category summaries → explainable Feed Health Score → Trendyol-LLM coach → weekly parent/teacher report.
 
-Apps, API, and extension are **not** in the tree yet. Follow [`docs/PHASES.md`](docs/PHASES.md).
+The workspace exists ([block 00](docs/building-blocks/00-monorepo.md)), but `apps/*` are still empty stubs: the API, web, mobile app and extension do **not** run yet. Follow [`docs/PHASES.md`](docs/PHASES.md).
+
+## Workspace
+
+```bash
+bun install
+bun run typecheck
+bun run test
+bun run lint
+```
+
+Shared Zod contract in `packages/shared`, score rules in `packages/score` (block 03). Copy `.env.example` to `.env`; never commit it.
 
 ## Read in this order
 

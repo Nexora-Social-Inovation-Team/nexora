@@ -1,0 +1,13 @@
+{
+  "name": "nexora-mobile",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "echo \"nexora-mobile: stub, no sources yet\"",
+    "test": "echo \"nexora-mobile: stub, no tests yet\""
+  },
+  "dependencies": {
+    "@nexora/shared": "workspace:*"
+  }
+}

@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "echo \"nexora-extension: stub, no sources yet\"",
-    "test": "echo \"nexora-extension: stub, no tests yet\""
+    "typecheck": "echo \"nexora-extension: plain MV3 JavaScript, no TypeScript build\"",
+    "test": "vitest run",
+    "test:e2e": "playwright test e2e/load-unpacked.spec.js"
   },
   "dependencies": {
     "@nexora/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "vitest": "^3.2.4"
   }
 }

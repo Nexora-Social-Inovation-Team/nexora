@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { env } from "./env";
 import { ApiProblem, apiErrorResponse } from "./errors";
 import { identity } from "./identity";
+import { signalsScore } from "./score";
 
 export const app = new Elysia()
   .use(cors({ origin: env.WEB_ORIGIN, credentials: true }))
@@ -14,6 +15,8 @@ export const app = new Elysia()
     // Duck-typed: shared and api each resolve their own zod copy under bun's
     // isolated linker, so `instanceof ZodError` can be false for a real one.
     if (error instanceof Error && error.name === "ZodError") return apiErrorResponse("validation_error");
+    // packages/score refuses to score an empty week (docs/API.md no_data).
+    if (error instanceof Error && error.name === "NoScoreDataError") return apiErrorResponse("no_data");
     if (code === "VALIDATION" || code === "PARSE") return apiErrorResponse("validation_error");
     if (code === "NOT_FOUND") return apiErrorResponse("no_data", "Kayıt bulunamadı.");
     return apiErrorResponse("upstream_unavailable");
@@ -28,7 +31,8 @@ export const app = new Elysia()
       return status(503, { ok: false, db: false });
     }
   })
-  .use(identity);
+  .use(identity)
+  .use(signalsScore);
 
 // Tests import `app` and call app.handle(new Request(...)); only the real
 // entry module opens a socket.

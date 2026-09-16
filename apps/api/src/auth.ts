@@ -155,6 +155,26 @@ export async function requireLinkedParent(user: SessionUser, youthId: string): P
   return youth;
 }
 
+/**
+ * Whose data is this request allowed to read? A youth always reads itself; a
+ * parent/teacher/admin must name the youth and pass the AuthZ matrix, and the
+ * target's own consent gate still applies. Shared by /score and the weekly
+ * report so the two cannot drift apart.
+ */
+export async function resolveYouthTarget(user: SessionUser, youthId?: string): Promise<string> {
+  if (user.role === "youth") {
+    requireActiveYouth(user);
+    if (youthId && youthId !== user.id) throw new ApiProblem("forbidden");
+    return user.id;
+  }
+  if (!youthId) throw new ApiProblem("validation_error", "youthId parametresi gerekli.");
+  if (!(await canReadYouth(user, youthId))) throw new ApiProblem("forbidden");
+  const youth = await loadYouth(youthId);
+  if (!youth || youth.role !== "youth") throw new ApiProblem("forbidden");
+  requireActive(youth.status);
+  return youth.id;
+}
+
 /** docs/ARCHITECTURE.md AuthZ matrix, read side (score + weekly report). */
 export async function canReadYouth(user: SessionUser, youthId: string): Promise<boolean> {
   if (user.role === "admin") return true;

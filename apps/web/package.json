@@ -4,10 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "echo \"nexora-web: stub, no sources yet\"",
-    "test": "echo \"nexora-web: stub, no tests yet\""
+    "dev": "vite dev --port 5173",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"nexora-web: no unit tests; run test:e2e for Playwright\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@nexora/shared": "workspace:*"
+    "@nexora/shared": "workspace:*",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-router": "^1.170.36",
+    "@tanstack/react-start": "^1.168.54",
+    "i18next": "^26.4.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-i18next": "^17.0.14"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0"
   }
 }

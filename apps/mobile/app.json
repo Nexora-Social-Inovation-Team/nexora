@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "NEXORA",
+    "slug": "nexora-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nexora",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F1412",
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}

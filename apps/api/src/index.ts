@@ -1,9 +1,11 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
+import { coach } from "./coach";
 import { prisma } from "./db";
 import { env } from "./env";
 import { ApiProblem, apiErrorResponse } from "./errors";
 import { identity } from "./identity";
+import { report } from "./report";
 import { signalsScore } from "./score";
 
 export const app = new Elysia()
@@ -32,7 +34,9 @@ export const app = new Elysia()
     }
   })
   .use(identity)
-  .use(signalsScore);
+  .use(signalsScore)
+  .use(coach)
+  .use(report);
 
 // Tests import `app` and call app.handle(new Request(...)); only the real
 // entry module opens a socket.

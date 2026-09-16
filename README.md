@@ -19,7 +19,7 @@ This repository is in a **docs-first** state. Product decisions are distilled fr
 
 **A — Competition MVP.** One demo path: youth app → parent consent → category summaries → explainable Feed Health Score → Trendyol-LLM coach → weekly parent/teacher report.
 
-The workspace exists ([block 00](docs/building-blocks/00-monorepo.md)), but `apps/*` are still empty stubs: the API, web, mobile app and extension do **not** run yet. Follow [`docs/PHASES.md`](docs/PHASES.md).
+Blocks [00–07](docs/building-blocks/) are implemented and pass typecheck, lint and tests: the API, web panel, mobile app and extension all run. Block 08 (demo seed) is still pending. Follow [`docs/PHASES.md`](docs/PHASES.md).
 
 ## Workspace
 

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Nexora — kategori dakikaları",
+  "version": "0.1.0",
+  "description": "Ham bağlantı toplanmaz; yalnızca kategori dakikaları sayılır.",
+  "permissions": ["tabs", "storage", "alarms"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Nexora" },
+  "options_page": "options.html"
+}

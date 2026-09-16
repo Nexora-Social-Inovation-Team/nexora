@@ -1,0 +1,134 @@
+import { router } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+
+import type { CategoryMinutes, Score } from "@nexora/shared";
+
+import { failureCode, getScore, getWeeklyReport } from "@/api";
+import { Btn, CATEGORIES, Card, KVKK_LINE, Screen, StateView, colors, s, useActiveGate } from "@/ui";
+
+type View3 = "loading" | "ready" | "empty" | "error";
+
+/** Screen 3 — "Bu haftaki dengen". Score + three reasons + category distribution. */
+export default function ScoreScreen() {
+  const active = useActiveGate();
+  const [view, setView] = useState<View3>("loading");
+  const [problem, setProblem] = useState<string>();
+  const [score, setScore] = useState<Score | null>(null);
+  const [minutes, setMinutes] = useState<CategoryMinutes>({});
+
+  const load = useCallback(async () => {
+    setView("loading");
+    try {
+      // the report carries the 8-category distribution; the score endpoint is the
+      // authority for value + reasons, so a missing report only costs the bars.
+      const [current, report] = await Promise.all([
+        getScore(),
+        getWeeklyReport().catch(() => null),
+      ]);
+      setScore(current);
+      setMinutes(report && !report.empty ? report.distribution : {});
+      setView("ready");
+    } catch (error) {
+      const code = failureCode(error);
+      if (code === "consent_missing") {
+        router.replace("/waiting");
+        return;
+      }
+      if (code === "no_data") {
+        setView("empty");
+        return;
+      }
+      setProblem(error instanceof Error ? error.message : "Skor alınamadı.");
+      setView("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (active) void load();
+  }, [active, load]);
+
+  const peak = Math.max(1, ...CATEGORIES.map(({ id }) => minutes[id] ?? 0));
+  const total = CATEGORIES.reduce((sum, { id }) => sum + (minutes[id] ?? 0), 0);
+  // docs/PRIVACY.md "Safety language": support suggestion, never a verdict or diagnosis.
+  const needsSupport = total > 0 && (minutes.harmful ?? 0) / total >= 0.15;
+
+  return (
+    <Screen>
+      <Text style={s.title}>Bu haftaki dengen</Text>
+      {view !== "ready" || !score ? (
+        <StateView
+          state={view === "ready" ? "loading" : view}
+          message={
+            view === "empty"
+              ? "Henüz kategori özeti yok. Eklenti özet gönderince veya demo verisi yüklenince skorun burada olur."
+              : problem
+          }
+          onRetry={() => void load()}
+        />
+      ) : (
+        <>
+          <View style={x.ring} accessible accessibilityLabel={`Skor ${score.value}, 100 üzerinden`}>
+            <Text style={x.value}>{score.value}</Text>
+            <Text style={s.muted}>/ 100</Text>
+          </View>
+          <Card>
+            {score.reasons.map((reason) => (
+              <Text key={reason} testID="reason" style={s.body}>
+                • {reason}
+              </Text>
+            ))}
+          </Card>
+          {needsSupport ? (
+            <Text style={x.support}>
+              Zararlı içerik payın bu hafta yüksek görünüyor. İstersen güvendiğin bir yetişkinle
+              konuş; gerekirse bir uzmandan destek alabilirsin.
+            </Text>
+          ) : null}
+          <Text style={s.muted}>Kategori dağılımı (dakika)</Text>
+          <Card>
+            {CATEGORIES.map(({ id, label }) => {
+              const value = minutes[id] ?? 0;
+              return (
+                <View
+                  key={id}
+                  style={x.row}
+                  accessible
+                  accessibilityLabel={`${label}: ${value} dakika`}
+                >
+                  <Text style={[s.body, x.label]}>{label}</Text>
+                  <View style={x.track}>
+                    <View style={[x.bar, { width: `${Math.round((value / peak) * 100)}%` }]} />
+                  </View>
+                  <Text style={[s.muted, x.minutes]}>{value} dk</Text>
+                </View>
+              );
+            })}
+          </Card>
+          <Text style={s.muted}>{KVKK_LINE}</Text>
+          <Btn label="Koç önerilerini gör" onPress={() => router.push("/coach")} />
+        </>
+      )}
+    </Screen>
+  );
+}
+
+const x = StyleSheet.create({
+  ring: {
+    alignSelf: "center",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 8,
+    borderColor: colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  value: { color: colors.text, fontSize: 52, fontWeight: "800" },
+  support: { color: colors.warn, fontSize: 16, lineHeight: 24 },
+  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  label: { width: 110, fontSize: 14 },
+  track: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.bg },
+  bar: { height: 10, borderRadius: 5, backgroundColor: colors.accent },
+  minutes: { width: 56, textAlign: "right" },
+});

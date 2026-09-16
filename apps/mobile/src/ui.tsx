@@ -219,7 +219,15 @@ export const s = StyleSheet.create({
   title: { color: colors.text, fontSize: 26, fontWeight: "700" },
   body: { color: colors.text, fontSize: 16, lineHeight: 24 },
   muted: { color: colors.muted, fontSize: 14, lineHeight: 20 },
-  error: { color: colors.danger, fontSize: 16, lineHeight: 24 },
+  // danger carries only 4.24:1 on surface, below AA text, so it stays a border (matches apps/web).
+  error: {
+    color: colors.text,
+    fontSize: 16,
+    lineHeight: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.danger,
+    paddingLeft: 12,
+  },
   card: { backgroundColor: colors.surface, borderRadius: 12, padding: 16, gap: 12 },
   btn: { borderRadius: 999, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center" },
   btnPrimary: { backgroundColor: colors.accent },

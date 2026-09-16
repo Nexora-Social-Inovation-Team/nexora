@@ -8,6 +8,7 @@ import Done from "@/app/done";
 import Onboarding from "@/app/index";
 import ScoreScreen from "@/app/score";
 import Waiting from "@/app/waiting";
+import { colors, s } from "@/ui";
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
@@ -255,5 +256,31 @@ describe("demo persona switch", () => {
     } finally {
       (globalThis as unknown as { __DEV__: boolean }).__DEV__ = dev;
     }
+  });
+});
+
+describe("a11y — WCAG 2.1 AA contrast (docs/DESIGN.md item 6)", () => {
+  const luminance = (hex: string) =>
+    [1, 3, 5]
+      .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((sum, c, i) => sum + [0.2126, 0.7152, 0.0722][i]! * c, 0);
+
+  const ratio = (a: string, b: string) => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  it("keeps every text colour at 4.5:1 on both the screen and card backgrounds", () => {
+    for (const style of [s.title, s.body, s.muted, s.error, s.wordmark, s.btnTextGhost]) {
+      for (const bg of [colors.bg, colors.surface]) {
+        expect(ratio(String(style.color), bg)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    expect(ratio(String(s.btnTextPrimary.color), colors.accent)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("still signals the error state without relying on colour alone", () => {
+    expect(s.error.borderLeftColor).toBe(colors.danger);
   });
 });

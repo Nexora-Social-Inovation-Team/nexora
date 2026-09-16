@@ -8,7 +8,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:migrate": "bun --env-file=../../.env x prisma migrate deploy",
-    "db:generate": "bun --env-file=../../.env x prisma generate"
+    "db:generate": "bun --env-file=../../.env x prisma generate",
+    "db:seed": "bun --env-file=../../.env prisma/seed.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["bun"]
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": ["src", "prisma", "vitest.config.ts"]
 }

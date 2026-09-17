@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { CategoryMinutes, Score } from "@nexora/shared";
 
 import { failureCode, getScore, getWeeklyReport } from "@/api";
-import { Btn, CATEGORIES, Card, KVKK_LINE, Screen, StateView, colors, s, useActiveGate } from "@/ui";
+import { Btn, CATEGORIES, Card, Illustration, PageHeading, Screen, StateView, colors, s, useActiveGate } from "@/ui";
 
 type View3 = "loading" | "ready" | "empty" | "error";
 
@@ -54,8 +54,9 @@ export default function ScoreScreen() {
   const needsSupport = total > 0 && (minutes.harmful ?? 0) / total >= 0.15;
 
   return (
-    <Screen>
-      <Text style={s.title}>Bu haftaki dengen</Text>
+    <Screen step={1}>
+      <PageHeading eyebrow="KENDİNE BİR BAK" title="Bu haftaki dengen" body="Bir not değil; zamanını anlamanın bir yolu." />
+      <Illustration kind="balance" />
       {view !== "ready" || !score ? (
         <StateView
           state={view === "ready" ? "loading" : view}
@@ -68,15 +69,21 @@ export default function ScoreScreen() {
         />
       ) : (
         <>
-          <View style={x.ring} accessible accessibilityLabel={`Skor ${score.value}, 100 üzerinden`}>
-            <Text style={x.value}>{score.value}</Text>
-            <Text style={s.muted}>/ 100</Text>
+          <View style={x.scorePanel}>
+            <Text style={s.eyebrow}>DENGE SKORUN</Text>
+            <View style={x.ring} accessible accessibilityLabel={`Skor ${score.value}, 100 üzerinden`}>
+              <Text style={x.value}>{score.value}</Text>
+              <Text style={s.muted}>/ 100</Text>
+            </View>
+            <Text style={[s.muted, x.center]}>Sayı bir başlangıç. Asıl hikâye, aşağıdaki üç nedende.</Text>
           </View>
           <Card>
-            {score.reasons.map((reason) => (
-              <Text key={reason} testID="reason" style={s.body}>
-                • {reason}
-              </Text>
+            <Text style={s.subtitle}>Bu skor ne anlatıyor?</Text>
+            {score.reasons.map((reason, index) => (
+              <View key={reason} style={s.numberedRow}>
+                <Text style={s.number}>0{index + 1}</Text>
+                <Text testID="reason" style={[s.body, s.flexible]}>{reason}</Text>
+              </View>
             ))}
           </Card>
           {needsSupport ? (
@@ -85,8 +92,9 @@ export default function ScoreScreen() {
               konuş; gerekirse bir uzmandan destek alabilirsin.
             </Text>
           ) : null}
-          <Text style={s.muted}>Kategori dağılımı (dakika)</Text>
           <Card>
+            <Text style={s.eyebrow}>ZAMANININ DAĞILIMI</Text>
+            <Text style={s.subtitle}>Kategori dağılımı (dakika)</Text>
             {CATEGORIES.map(({ id, label }) => {
               const value = minutes[id] ?? 0;
               return (
@@ -96,16 +104,17 @@ export default function ScoreScreen() {
                   accessible
                   accessibilityLabel={`${label}: ${value} dakika`}
                 >
-                  <Text style={[s.body, x.label]}>{label}</Text>
+                  <View style={x.rowLabel}>
+                    <Text style={[s.body, x.label]}>{label}</Text>
+                    <Text style={s.muted}>{value} dk</Text>
+                  </View>
                   <View style={x.track}>
                     <View style={[x.bar, { width: `${Math.round((value / peak) * 100)}%` }]} />
                   </View>
-                  <Text style={[s.muted, x.minutes]}>{value} dk</Text>
                 </View>
               );
             })}
           </Card>
-          <Text style={s.muted}>{KVKK_LINE}</Text>
           <Btn label="Koç önerilerini gör" onPress={() => router.push("/coach")} />
         </>
       )}
@@ -114,6 +123,8 @@ export default function ScoreScreen() {
 }
 
 const x = StyleSheet.create({
+  scorePanel: { backgroundColor: colors.tint, borderRadius: 24, padding: 24, alignItems: "center", gap: 20 },
+  center: { textAlign: "center" },
   ring: {
     alignSelf: "center",
     width: 160,
@@ -121,14 +132,15 @@ const x = StyleSheet.create({
     borderRadius: 80,
     borderWidth: 8,
     borderColor: colors.accent,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  value: { color: colors.text, fontSize: 52, fontWeight: "800" },
+  value: { color: colors.text, fontSize: 52, fontWeight: "600", letterSpacing: -1.5 },
   support: { color: colors.warn, fontSize: 16, lineHeight: 24 },
-  row: { flexDirection: "row", alignItems: "center", gap: 8 },
-  label: { width: 110, fontSize: 14 },
-  track: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.bg },
-  bar: { height: 10, borderRadius: 5, backgroundColor: colors.accent },
-  minutes: { width: 56, textAlign: "right" },
+  row: { gap: 6, paddingVertical: 4 },
+  rowLabel: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+  label: { flex: 1, fontSize: 14 },
+  track: { height: 6, borderRadius: 3, backgroundColor: colors.band },
+  bar: { height: 6, borderRadius: 3, backgroundColor: colors.link },
 });

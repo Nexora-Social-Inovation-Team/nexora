@@ -4,7 +4,7 @@ Visual exploration is out of scope for this file. This is the contract for UI st
 
 ## Principles
 
-1. **Youth first.** Mobile, 1–3 minute tasks, dark-theme friendly, one idea per screen.
+1. **Youth first.** Mobile, 1–3 minute tasks, one idea per screen, light and high-contrast.
 2. **Score is a mirror, not a grade.** No traffic-light “iyi/kötü çocuk”. Prefer a 0–100 number + three plain-language reasons.
 3. **Privacy is visible.** Critical screens show that raw URLs are not collected.
 4. **Non-judgmental, non-diagnostic.** High `harmful` share → support language, not a verdict.
@@ -134,10 +134,11 @@ Hero:
 
 - Title: `Ölç → Anla → Koçla → Üret`
 - Sub: `13–18 yaş için yerli sosyal yapay zekâ. Yasaklamadan, yargılamadan.`
-- Trust: `Ham URL yok. Mesaj yok. Arama kaydı yok.`
+- Trust: `Ham URL yok. Mesaj yok. Arama kaydı yok.` — now in the navy announcement
+  strip above the nav, so it shows on every public page instead of the hero only.
 - CTA: `Nasıl çalışır?` → `/how-it-works`. Secondary: `Veli paneli (demo)` → login.
 
-Three cards:
+Three cards, under eyebrow `ROLLER` + heading `Kim ne görür?`:
 
 1. **Genç** — `Kısa skor, kısa görev, görünür üretim.`
 2. **Veli** — `Kategori eğilimleri ve birlikte hedef. Geçmiş dökümü yok.`
@@ -171,25 +172,76 @@ Table: collected vs never (from [`PRIVACY.md`](PRIVACY.md), Turkish labels). Sec
 
 Same report block. Header: `Sınıf özeti (demo)` instead of `Çocuğunun haftası`. MVP may show a single demo youth as the class example. Do not build a 50-row student table.
 
-## Visual tokens (starter)
+## Visual tokens
 
-Keep a small, distinctive palette — not generic purple SaaS.
+Measured off [calendly.com](https://www.a1.gallery/website/calendly) via a1.gallery
+(`get_website_sections` → `designTokens`) and applied verbatim in
+`apps/web/src/styles.css`, `apps/mobile/src/ui.tsx` and the two extension pages.
+This replaces the earlier dark chartreuse starter palette.
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#0F1412` | Youth + app dark |
-| `--surface` | `#1A221C` | Cards |
-| `--text` | `#F4F1EA` | Primary text |
-| `--muted` | `#A7B0A1` | Secondary |
-| `--accent` | `#C4F542` | CTAs, score ring (chartreuse, not traffic-green) |
-| `--warn` | `#E4B44C` | Support suggestion, not alarm |
-| `--danger` | `#D45D4A` | Errors only, never score |
-| `--font-display` | Fraunces or similar serif | Wordmark / hero only |
-| `--font-ui` | Source Sans 3 / system-ui | Body |
+| `--bg` | `#FCFBF8` | Page background (all apps, light) |
+| `--band` | `#F1EFE9` | Beige hero / section band, chart tracks, skeletons |
+| `--surface` | `#FFFFFF` | Cards — always on a `--line` border |
+| `--line` | `#E4E0D8` | Hairline borders and dividers (non-text) |
+| `--tint` | `#E7EEFB` | Light-blue pill and panel surface, 14:1 with `--text` |
+| `--text` | `#071A31` | Navy ink, 16:1 on `--bg` |
+| `--muted` | `#4D5F74` | Secondary text, 6.3:1 on `--bg` |
+| `--accent` | `#071A31` | Primary CTA fill; `--bg` as its text is 16:1 |
+| `--link` | `#0B5FD0` | Links, focus ring, chart fills, 5.8:1 on `--surface` |
+| `--warn` | `#8A5A00` | Support suggestion, not alarm, 5.9:1 on `--surface` |
+| `--danger` | `#B3261E` | Errors only, never score, 6.5:1 on `--surface` |
+| `--font-display` | Geist 600, `-0.033em`, `line-height: 1.1` | Headings and wordmark |
+| `--font-ui` | Geist 400 | Body |
 
-Public marketing may use the same tokens with a slightly lighter surface. Do not introduce a second brand.
+Weights: 600 for headings — a1 measured 500 off the footer section, but the hero
+and section headings on the reference pages are visibly heavier; the footer
+statement is the one place that stays at 500. Body copy is 14–16px on a narrow
+measure (`max-w-md` for hero sub, `max-w-2xl` for prose) at `line-height: 1.6`.
+The size contrast between a 60px heading and 14px body is what makes the
+reference read editorial, so do not grow the body to match the heading.
 
-Youth score ring uses `--accent` at any value. Reasons, not color, encode “needs attention”.
+Shapes, also measured: cards `rounded-2xl` on a 1px `--line` border, bands and the
+footer block `rounded-3xl`, buttons `rounded-lg`, no shadows. The one gradient is
+the blue product panel in the hero.
+
+Public page composition, in reference order: navy announcement strip carrying the
+KVKK line, nav with mark + wordmark + one filled pill, an inset beige band
+(`mx-2 rounded-3xl`) holding the heading block and the product frame, then
+full-bleed sections whose content sits in the 1352px container, then the navy
+footer block with one oversized statement. Sub-pages use the same band via
+`PageHeader`. A small uppercase letterspaced eyebrow sits above section headings,
+not above the hero heading.
+
+The "örnek haftalık rapor" frame is markup (`apps/web/src/preview.tsx`), not a
+screenshot, and uses the `deniz_balanced` seed numbers so it cannot drift from
+the demo. It is `aria-hidden` and every caller captions it.
+
+Geist loads from Google Fonts on web and falls back to `system-ui` offline. Expo
+uses the platform grotesque — Geist there needs `expo-font` plus a bundled asset,
+which Phase A skips.
+
+Youth score ring uses `--accent` at any value. Reasons, not colour, encode
+"needs attention". Public marketing and the app share one palette; do not
+introduce a second brand.
+
+Mobile adapts this composition with a persistent privacy strip, compact wordmark,
+cream heading panels, and an Ölç / Anla / Koçla / Üret progress indicator. The
+score sits on a blue panel; explanations use numbered rows and category labels
+sit above their bars so long Turkish labels fit narrow screens. Coach tasks and
+the earned badge share the blue treatment. Every screen also carries an
+asset-free illustration: a small white metric card on a blue orbit with one
+screen-specific cue (steps, consent, balance, tips, or badge). The illustration
+is decorative but has a concise accessible label. Native fonts remain platform
+defaults.
+
+The extension popup and options page share `apps/extension/ui.css`: cream summary
+panel, white category card, navy controls, and blue privacy note. The popup shows
+the live category-minute total and an explicit paused/counting label. Both panels
+repeat the same orbit/card illustration so the mobile and extension experiences
+read as one product. Settings remain a single keyboard-submittable form, linked
+directly from the popup.
 
 ## Demo seeds (minutes → distinct scores)
 

@@ -24,6 +24,22 @@ test("loads unpacked, starts the service worker and opens the popup", async () =
     await expect(page.getByRole("status")).toContainText("Henüz kategori dakikası yok");
     await expect(page.getByText("Ham bağlantı toplanmaz; yalnızca kategori dakikaları.")).toBeVisible();
 
+    // MEASURED: Chrome derives idle from OS-level input, so the transition is a
+    // property of the host, not of the extension. On an automation-only profile
+    // it reports "idle" about a second after the worker registers its listener
+    // (synthetic CDP input does not clear it) and accruing() then refuses to
+    // open a checkpoint; on a developer machine with a human at the keyboard it
+    // never fires at all and the key stays unset. Waiting for either outcome
+    // fails on the other machine.
+    //
+    // So: DECLARE the one thing a human machine reports — an active screen —
+    // through the extension's own storage key, before each activation, so a late
+    // transition cannot silently zero the segment that follows. Nothing else is
+    // faked: the tab events, chrome.tabs.query, the worker's checkpoint writes
+    // and the popup's live updates below all run for real.
+    const declareActive = () => page.evaluate(() => chrome.storage.local.set({ idleState: "active" }));
+    await declareActive();
+
     // Real tabs, real background.js, real clock: three activations inside one
     // minute. Every second of the first two has to survive the switch — the whole
     // point of the event-driven checkpoint. The unit suite owns the exact seconds.
@@ -35,6 +51,7 @@ test("loads unpacked, starts the service worker and opens the popup", async () =
       const tab = await context.newPage();
       await tab.route("**/*", (route) => route.fulfill({ contentType: "text/html", body: "<p>test</p>" }));
       await tab.goto(visited);
+      await declareActive();
       await tab.bringToFront();
       await tab.waitForTimeout(1200); // dwell, then the next activation settles it
     }

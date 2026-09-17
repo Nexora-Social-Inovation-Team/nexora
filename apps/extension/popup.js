@@ -18,6 +18,10 @@ function setStatus(text, state) {
 
 function render(state) {
   const entries = Object.entries(state.seconds).filter(([, seconds]) => seconds > 0);
+  const total = entries.reduce((sum, [, seconds]) => sum + seconds, 0);
+  $("total").textContent = total > 0 && total < 30 ? "<1" : Math.round(total / 60).toLocaleString("tr-TR");
+  $("activity").textContent = state.paused ? "Duraklatıldı" : "Sayım açık";
+  $("activity").dataset.paused = String(state.paused);
   const list = $("minutes");
   list.replaceChildren(
     ...entries.map(([category, seconds]) => {
@@ -26,12 +30,23 @@ function render(state) {
       label.textContent = LABELS_TR[category] ?? category;
       const value = document.createElement("strong");
       value.textContent = minutesLabelTr(seconds);
-      li.append(label, value);
+      const heading = document.createElement("div");
+      heading.className = "category-label";
+      heading.append(label, value);
+      const track = document.createElement("span");
+      track.className = "bar-track";
+      track.setAttribute("aria-hidden", "true");
+      const bar = document.createElement("span");
+      bar.className = "bar-fill";
+      bar.style.width = `${(seconds / total) * 100}%`;
+      track.append(bar);
+      li.append(heading, track);
       return li;
     }),
   );
   list.hidden = entries.length === 0;
   $("pause").textContent = state.paused ? "Devam et" : "Duraklat";
+  $("pause").setAttribute("aria-pressed", String(state.paused));
 
   const sent = state.lastSentAt
     ? `Son gönderim: ${new Date(state.lastSentAt).toLocaleTimeString("tr-TR")}`
@@ -57,8 +72,15 @@ async function main() {
   });
 
   $("send").addEventListener("click", async () => {
+    $("send").disabled = true;
     $("last").textContent = "Gönderiliyor…";
-    render(await sendNow());
+    try {
+      render(await sendNow());
+    } catch {
+      setStatus("Özet gönderilemedi. Yeniden dene.", "error");
+    } finally {
+      $("send").disabled = false;
+    }
   });
   $("pause").addEventListener("click", async () => {
     const current = await loadState();

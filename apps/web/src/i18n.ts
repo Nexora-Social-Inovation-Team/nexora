@@ -32,6 +32,7 @@ export const tr = {
     trust: "Ham URL yok. Mesaj yok. Arama kaydı yok.",
     cta: "Nasıl çalışır?",
     ctaSecondary: "Veli paneli (demo)",
+    cardsEyebrow: "ROLLER",
     cardsTitle: "Kim ne görür?",
     cards: [
       { title: "Genç", body: "Kısa skor, kısa görev, görünür üretim." },

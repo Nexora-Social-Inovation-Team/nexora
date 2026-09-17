@@ -22,7 +22,9 @@ chrome.tabs.onUpdated.addListener((_tabId, change) => {
 chrome.windows.onFocusChanged.addListener((windowId) => {
   void update({ focused: windowId !== chrome.windows.WINDOW_ID_NONE });
 });
-chrome.idle.onStateChanged.addListener((state) => void update({ idle: state !== "active" }));
+// chrome's own "active" | "idle" | "locked" is stored verbatim: "locked" always
+// stops accrual, plain "idle" only stops it for a silent tab (see accruing()).
+chrome.idle.onStateChanged.addListener((state) => void update({ idleState: state }));
 
 // A new token or API address is a fresh chance for a blocked sender.
 chrome.storage.onChanged.addListener((_changes, area) => {

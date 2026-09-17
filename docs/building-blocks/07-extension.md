@@ -27,6 +27,8 @@ Real minimal Chrome/Edge extension: **domain-level** minutes, local category dic
 | `tiktok.com` | `entertainment` |
 | `kultur.gov.tr` | `culture` |
 
+The shipped list is a superset of this table: hand rows in `apps/extension/dictionary.js` cover every category except `harmful`, `dictionary.generated.js` adds ~11k hosts imported from the UT1 Capitole blacklists (CC BY-SA 4.0, `npm run dict:build`), and registry-controlled suffixes (`.edu`, `.edu.tr`, `.k12.tr`, `.ac.uk`, `.museum`) catch the rest. Keyword matching on arbitrary hosts stays out — a squatted `sportsbet.example` must not earn sport minutes.
+
 Unknown host → **ignore** (do not invent `harmful` from random sites). Do not ship a “harmful URL list” in MVP; harmful minutes come from **seed**, not the live dictionary.
 
 ## Permissions
@@ -47,7 +49,7 @@ No content script that reads `document.body`.
 - Firefox is out of scope.
 - Not a blocker for the 5–7 min demo if seed is ready; still ship the extension as a jury artifact (load unpacked).
 
-**Implemented beyond the minimum — 2026-09-17:** the periodic-alarm send path this block allows is live. Accounting is event-driven and second-accurate (tab / focus / idle events with a 1-minute safety flush), and the old flat "+1 minute per tick" ceiling is lifted; a 5-minute alarm posts the cumulative period total on its own, and the UTC day rollover sends the finished day. See `apps/extension/README.md`.
+**Implemented beyond the minimum — 2026-09-17:** the periodic-alarm send path this block allows is live. Accounting is event-driven and second-accurate (tab / focus / idle events with a 1-minute safety flush), and the old flat "+1 minute per tick" ceiling is lifted; a 5-minute alarm posts the cumulative period total on its own, and the UTC day rollover sends the finished day. A **locked** screen always stops accrual, but plain **idle** (now 180 s detection) stops it only when the active tab is silent — an audible tab keeps counting, so a long video is no longer reported as idle time. See `apps/extension/README.md`.
 
 ## Done when
 

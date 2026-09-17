@@ -13,17 +13,41 @@ or lost, machine idle or locked or active again. A 1-minute alarm is only a **sa
 settles the elapsed seconds of a long dwell, it never adds a flat minute. So a tab switch 20
 seconds in credits those 20 seconds, and the time before the first alarm is not rounded away.
 
-Accrual **stops** while: no Chrome window has focus (`WINDOW_ID_NONE`), the machine is idle or
-locked (60 s detection), **Duraklat** is on, or the active tab maps to no category. A single
-segment is capped at two flush windows (120 s), so a suspended laptop cannot credit hours.
+Accrual **stops** while: no Chrome window has focus (`WINDOW_ID_NONE`), the screen is **locked**,
+**Duraklat** is on, or the active tab maps to no category. A single segment is capped at two flush
+windows (120 s), so a suspended laptop cannot credit hours.
+
+Plain **idle** is treated differently from locked. `chrome.idle` only means "no keyboard or mouse
+for 180 s" (three minutes is *walked away*; one minute is *read a long paragraph*), so idle stops
+accrual **only when the active tab is silent**. A tab that is playing sound (`tab.audible`, already
+on the objects `chrome.tabs.query` returns — no extra permission) keeps counting: a twenty-minute
+video watched without touching the keyboard is being consumed, and reporting it as idle is the
+under-counting this extension exists to fix. A locked screen is unambiguous and always stops.
+Known ceiling: a **muted** video still counts as idle.
+
+`idleState` stores Chrome's own `"active" | "idle" | "locked"` verbatim — one boolean cannot tell
+locked from idle. An unknown or missing value reads as `"active"`: the gate errs towards counting.
 
 Minutes are derived only when sending or displaying (`Math.round(seconds / 60)`). A category under
 half a minute reports 0 and shows `<1 dk`, but its seconds stay in the accumulator, so a partial
 minute is delayed, never discarded.
 
-`chrome.storage.local` holds `seconds`, `periodStart` and flags only — `paused`, `focused`, `idle`,
-`activeCategory`, `since`, `sentTotal`, `lastSentAt`, `lastStatus`, `sendBlocked`. No hostname, url,
-tab id or title. Settings (`apiBase`, `token`) live in `chrome.storage.sync`.
+`chrome.storage.local` holds `seconds`, `periodStart` and flags only — `paused`, `focused`,
+`idleState`, `activeCategory`, `since`, `sentTotal`, `lastSentAt`, `lastStatus`, `sendBlocked`. No
+hostname, url, tab id or title. Settings (`apiBase`, `token`) live in `chrome.storage.sync`.
+
+## Dictionary
+
+`dictionary.js` holds the hand-written rows and the registry-suffix fallback
+(`.edu`, `.edu.tr`, `.k12.tr`, `.ac.uk`, `.museum`). `dictionary.generated.js`
+adds ~11k hosts for `sports`, `entertainment`, `science` and `entrepreneurship`;
+regenerate it with `npm run dict:build`. Hand rows win, generated rows come next,
+suffix rules last, and an unknown host stays unknown.
+
+Generated data comes from the [UT1 Capitole
+blacklists](https://dsi.ut-capitole.fr/blacklists/), CC BY-SA 4.0. `arts`,
+`culture` and `national_memory` have no source there and stay hand-written, and
+nothing is ever mapped to `harmful`.
 
 ## Sending
 
@@ -71,6 +95,12 @@ et** (stops accrual, not just sending) and **Temizle** (fresh accumulator).
 bun run --filter nexora-extension test      # vitest: accounting, sending, wiring, privacy, payload, manifest
 bun run --filter nexora-extension test:e2e  # playwright (node, not bun): load unpacked + real tab switches
 ```
+
+`chrome.idle` reports `"idle"` for every automation profile — Chrome derives it from OS-level input,
+which Playwright never generates and synthetic CDP input does not clear — so the e2e waits for that
+unavoidable transition and then writes `idleState: "active"` into storage, declaring what a human
+machine would report. Everything else in that run (tab events, `chrome.tabs.query`, the worker's
+own writes, the popup's live updates) is real.
 
 Permissions are `tabs`, `storage`, `alarms`, `idle` and host access to the API origin only — no
 `<all_urls>`, no content scripts, no `scripting`, no `webRequest`. Changing the API address to a

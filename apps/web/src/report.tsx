@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiProblem, approveConsent, fetchWeeklyReport } from "./api";
 import { tr } from "./i18n";
+import { btnPrimary, cardClass } from "./ui";
 
-const card = "mt-6 rounded-lg bg-surface p-5";
+const card = `mt-6 ${cardClass}`;
 
 function Skeleton() {
   const { t } = useTranslation();
@@ -13,9 +14,9 @@ function Skeleton() {
     <div role="status" aria-live="polite" className={card}>
       <p>{t("panel.loading")}</p>
       <div aria-hidden="true" className="mt-4 space-y-3">
-        <div className="h-10 w-24 animate-pulse rounded bg-muted/30" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted/30" />
-        <div className="h-4 w-3/4 animate-pulse rounded bg-muted/30" />
+        <div className="h-12 w-28 animate-pulse rounded-lg bg-band" />
+        <div className="h-4 w-full animate-pulse rounded-lg bg-band" />
+        <div className="h-4 w-3/4 animate-pulse rounded-lg bg-band" />
       </div>
     </div>
   );
@@ -31,7 +32,7 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
         <h2 id="score-title" className="text-xl">
           {t("panel.scoreTitle")}
         </h2>
-        <p className="mt-2 font-display text-6xl text-accent">{report.score.value}</p>
+        <p className="mt-3 font-display text-7xl tabular-nums">{report.score.value}</p>
         <p className="text-muted">{t("panel.scoreOutOf")}</p>
         <p className="mt-1 text-muted">{`${t("panel.periodLabel")}: ${report.period}`}</p>
         <h3 className="mt-5 text-lg">{t("panel.reasonsTitle")}</h3>
@@ -53,7 +54,7 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
               <li key={id} className="flex flex-wrap items-center gap-3">
                 <span className="w-44">{CATEGORY_LABELS_TR[id]}</span>
                 <span className="tabular-nums">{`${minutes} ${t("panel.minutes")}`}</span>
-                <span aria-hidden="true" className="h-2 rounded bg-accent" style={{ width: `${(minutes / total) * 40}%` }} />
+                <span aria-hidden="true" className="h-2 rounded-full bg-link" style={{ width: `${(minutes / total) * 40}%` }} />
               </li>
             );
           })}
@@ -88,7 +89,7 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
         {report.share_text ? (
           <>
             <h3 className="mt-5 text-lg">{t("panel.shareTitle")}</h3>
-            <blockquote className="mt-2 border-l-2 border-accent pl-3">{report.share_text}</blockquote>
+            <blockquote className="mt-2 rounded-xl bg-band px-4 py-3">{report.share_text}</blockquote>
           </>
         ) : null}
       </section>
@@ -131,8 +132,8 @@ export function WeeklyReportPanel({ canApprove }: { canApprove: boolean }) {
             onClick={() => setYouthId(youth.id)}
             className={
               youth.id === youthId
-                ? "rounded bg-accent px-3 py-1 font-semibold text-bg"
-                : "rounded border border-muted px-3 py-1"
+                ? "rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-bg"
+                : "rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium"
             }
           >
             {youth.label}
@@ -153,13 +154,13 @@ export function WeeklyReportPanel({ canApprove }: { canApprove: boolean }) {
               type="button"
               disabled={approve.isPending}
               onClick={() => approve.mutate()}
-              className="mt-4 rounded bg-accent px-4 py-2 font-semibold text-bg disabled:opacity-70"
+              className={`${btnPrimary} mt-4`}
             >
               {approve.isPending ? t("panel.approving") : t("panel.approve")}
             </button>
           ) : null}
           {approve.isError ? (
-            <p role="alert" className="mt-3 border-l-4 border-danger pl-3">
+            <p role="alert" className="mt-3 border-l-4 border-danger pl-3 text-danger">
               {t("panel.approveError")}
             </p>
           ) : null}
@@ -174,14 +175,14 @@ export function WeeklyReportPanel({ canApprove }: { canApprove: boolean }) {
 
       {problem && problem !== "consent_missing" && problem !== "forbidden" ? (
         <section className={card}>
-          {/* --danger carries too little contrast on --surface for AA text, so it stays a border. */}
-          <p role="alert" className="border-l-4 border-danger pl-3">
+          {/* --danger clears AA on --surface now; the border keeps the state non-colour-only. */}
+          <p role="alert" className="border-l-4 border-danger pl-3 text-danger">
             {t("panel.error")}
           </p>
           <button
             type="button"
             onClick={() => void report.refetch()}
-            className="mt-4 rounded bg-accent px-4 py-2 font-semibold text-bg"
+            className={`${btnPrimary} mt-4`}
           >
             {t("panel.retry")}
           </button>

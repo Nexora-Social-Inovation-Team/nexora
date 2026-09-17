@@ -39,27 +39,68 @@ export function useSession(): Session {
   return session;
 }
 
-const linkClass = "underline underline-offset-4 hover:text-accent";
+/*
+ * Shared class tokens. Calendly's kit is three shapes: a navy filled button, a
+ * white outlined one, and a white card on a hairline with a generous radius.
+ * Every screen composes these instead of restating the utilities.
+ */
+export const btnPrimary =
+  "inline-block rounded-lg bg-accent px-5 py-2.5 font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-60";
+export const btnSecondary =
+  "inline-block rounded-lg border border-line bg-surface px-5 py-2.5 font-medium text-text transition-colors hover:border-text";
+export const cardClass = "rounded-2xl border border-line bg-surface p-6";
+
+/* Nav and footer links are unstyled until hover — underline on hover, ring on focus. */
+const navLink = "text-muted transition-colors hover:text-text hover:underline hover:underline-offset-4";
+const wordmark = "font-display text-xl font-semibold tracking-tight";
+
+/** The reference keeps content on a 1352px measure inside full-bleed sections. */
+export const container = "mx-auto w-full max-w-[84rem] px-4 sm:px-6";
+
+function Mark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0">
+      <circle cx="10" cy="10" r="9" fill="currentColor" />
+      <circle cx="10" cy="10" r="4.5" fill="none" stroke="var(--bg)" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+/** Navy strip above the nav. The reference leads with one; ours carries the KVKK line. */
+function AnnouncementBar() {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-accent text-bg">
+      <p className={`${container} flex flex-wrap items-center justify-center gap-3 py-2 text-sm`}>
+        {t("landing.trust")}
+        <Link to="/privacy" className="rounded-full bg-bg/10 px-3 py-1 font-medium hover:bg-bg/20">
+          {t("nav.privacy")} <span aria-hidden="true">→</span>
+        </Link>
+      </p>
+    </div>
+  );
+}
 
 function Header() {
   const { t } = useTranslation();
   return (
-    <header className="border-b border-surface">
-      <nav aria-label="Ana menü" className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-4">
-        <Link to="/" className="font-display text-xl tracking-wide">
+    <header className="border-b border-line">
+      <nav aria-label="Ana menü" className={`${container} flex flex-wrap items-center gap-6 py-4`}>
+        <Link to="/" className={`${wordmark} flex items-center gap-2`}>
+          <Mark />
           {t("brand")}
         </Link>
         <span className="grow" />
-        <Link to="/how-it-works" className={linkClass}>
+        <Link to="/how-it-works" className={navLink}>
           {t("nav.howItWorks")}
         </Link>
-        <Link to="/privacy" className={linkClass}>
+        <Link to="/privacy" className={navLink}>
           {t("nav.privacy")}
         </Link>
-        <Link to="/faq" className={linkClass}>
+        <Link to="/faq" className={navLink}>
           {t("nav.faq")}
         </Link>
-        <Link to="/app/parent" className={linkClass}>
+        <Link to="/app/parent" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:opacity-90">
           {t("nav.login")}
         </Link>
       </nav>
@@ -70,26 +111,53 @@ function Header() {
 function Footer() {
   const { t } = useTranslation();
   return (
-    <footer className="mt-16 border-t border-surface">
-      <nav aria-label={t("footer.title")} className="mx-auto flex max-w-5xl flex-wrap gap-4 px-4 py-6">
-        {tr.footer.links.map((link) => (
-          <Link key={link.label} to={link.to} className={linkClass}>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-      <p className="mx-auto max-w-5xl px-4 pb-8 text-muted">{t("footer.note")}</p>
+    <footer className="mx-2 mt-20 mb-2 rounded-3xl bg-accent px-6 py-12 text-bg sm:mx-4 sm:px-12 sm:py-16">
+      {/* The reference closes on one oversized statement at weight 500, then the links. */}
+      <div className="mx-auto max-w-[78rem]">
+        <p className={`${wordmark} flex items-center gap-2`}>
+          <Mark />
+          {t("brand")}
+        </p>
+        <p className="mt-6 max-w-2xl text-balance font-display text-3xl font-medium tracking-[-0.033em] sm:text-5xl">
+          {t("landing.sub")}
+        </p>
+        <nav
+          aria-label={t("footer.title")}
+          className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-bg/15 pt-6 text-sm"
+        >
+          {tr.footer.links.map((link) => (
+            <Link key={link.label} to={link.to} className="hover:underline hover:underline-offset-4">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <p className="mt-6 text-sm text-bg/70">{t("footer.note")}</p>
+      </div>
     </footer>
   );
 }
 
+/**
+ * Inner-page header: the same inset beige band the reference uses on its
+ * sub-pages — eyebrow, one large tight heading, small sub copy, all centred.
+ */
+export function PageHeader({ eyebrow, title, sub }: { eyebrow?: string; title: string; sub?: string }) {
+  return (
+    <section className="mx-2 mt-2 rounded-3xl bg-band px-4 py-16 text-center sm:mx-4 sm:py-20">
+      {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
+      <h1 className="mx-auto mt-4 max-w-3xl text-4xl leading-[1.05] tracking-[-0.04em] sm:text-6xl">{title}</h1>
+      {sub ? <p className="mx-auto mt-5 max-w-md text-muted">{sub}</p> : null}
+    </section>
+  );
+}
+
+/** Sections are full-bleed; each page wraps its own content in `container`. */
 export function PublicPage({ children }: { children: ReactNode }) {
   return (
     <>
+      <AnnouncementBar />
       <Header />
-      <main id="main" className="mx-auto max-w-5xl px-4 py-10">
-        {children}
-      </main>
+      <main id="main">{children}</main>
       <Footer />
     </>
   );
@@ -108,23 +176,23 @@ export function AppShell({
   const { signOut } = useSession();
   const navigate = useNavigate();
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 sm:flex-row">
-      <nav aria-label="Panel menüsü" className="flex shrink-0 flex-col gap-3 sm:w-48">
-        <Link to="/" className="font-display text-xl tracking-wide">
+    <div className={`${container} flex flex-col gap-10 py-8 sm:flex-row`}>
+      <nav aria-label="Panel menüsü" className="flex shrink-0 flex-col items-start gap-3 sm:w-56">
+        <Link to="/" className={wordmark}>
           {t("brand")}
         </Link>
-        <p className="w-fit rounded-full border border-accent px-3 py-1 text-accent">
+        <p className="rounded-full border border-line bg-band px-3 py-1 text-sm font-medium">
           {role === "parent" ? t("panel.roles.parent") : t("panel.roles.teacher")}
         </p>
-        <Link to={role === "parent" ? "/app/parent" : "/app/teacher"} className={linkClass}>
+        <Link to={role === "parent" ? "/app/parent" : "/app/teacher"} className={navLink}>
           {t("panel.nav.report")}
         </Link>
-        <Link to="/privacy" className={linkClass}>
+        <Link to="/privacy" className={navLink}>
           {t("panel.nav.privacy")}
         </Link>
         <button
           type="button"
-          className="w-fit underline underline-offset-4 hover:text-accent"
+          className={navLink}
           onClick={() => {
             signOut();
             void navigate({ to: "/" });
@@ -134,7 +202,7 @@ export function AppShell({
         </button>
       </nav>
       <main id="main" className="grow">
-        <h1 className="text-3xl">{title}</h1>
+        <h1 className="text-4xl">{title}</h1>
         {children}
       </main>
     </div>
@@ -154,10 +222,10 @@ export function DemoLogin({ defaultPersona }: { defaultPersona: Persona }) {
 
   return (
     <main id="main" className="mx-auto max-w-md px-4 py-16">
-      <h1 className="text-3xl">{t("login.title")}</h1>
-      <p className="mt-2 text-muted">{t("login.body")}</p>
+      <h1 className="text-4xl">{t("login.title")}</h1>
+      <p className="mt-3 text-muted">{t("login.body")}</p>
       <form
-        className="mt-6 flex flex-col gap-4"
+        className={`${cardClass} mt-6 flex flex-col gap-4`}
         onSubmit={(event) => {
           event.preventDefault();
           setPending(true);
@@ -167,10 +235,12 @@ export function DemoLogin({ defaultPersona }: { defaultPersona: Persona }) {
             .finally(() => setPending(false));
         }}
       >
-        <label htmlFor="persona">{t("login.selectLabel")}</label>
+        <label htmlFor="persona" className="font-medium">
+          {t("login.selectLabel")}
+        </label>
         <select
           id="persona"
-          className="rounded border border-muted bg-surface px-3 py-2"
+          className="rounded-lg border border-line bg-surface px-3 py-2.5"
           value={persona}
           onChange={(event) => setPersona(event.target.value as Persona)}
         >
@@ -183,13 +253,14 @@ export function DemoLogin({ defaultPersona }: { defaultPersona: Persona }) {
         <button
           type="submit"
           disabled={pending || !hydrated}
-          className="rounded bg-accent px-4 py-2 font-semibold text-bg disabled:opacity-70"
+          className={btnPrimary}
         >
           {pending ? t("login.pending") : t("login.submit")}
         </button>
       </form>
+      {/* --danger now clears AA on --surface, but the border keeps the state non-colour-only. */}
       {failed ? (
-        <p role="alert" className="mt-4 text-danger">
+        <p role="alert" className="mt-4 border-l-4 border-danger pl-3 text-danger">
           {t("login.error")}
         </p>
       ) : null}

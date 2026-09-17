@@ -1,11 +1,11 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 
 import type { CoachResponse } from "@nexora/shared";
 
 import { completeTask, failureCode, getCoach } from "@/api";
-import { Btn, Card, Screen, StateView, s, useActiveGate } from "@/ui";
+import { Btn, Card, Illustration, PageHeading, Screen, StateView, s, useActiveGate } from "@/ui";
 
 /** Screen 4 — three tips plus one micro-task. */
 export default function Coach() {
@@ -49,8 +49,9 @@ export default function Coach() {
   }
 
   return (
-    <Screen>
-      <Text style={s.title}>Koç önerileri</Text>
+    <Screen step={2}>
+      <PageHeading eyebrow="SANA UYGUN KÜÇÜK ADIMLAR" title="Koç önerileri" body="Her şeyi değiştirmene gerek yok. Bugün bir adım yeter." />
+      <Illustration kind="coach" />
       {view !== "ready" || !coach ? (
         <StateView
           state={view === "ready" ? "loading" : view}
@@ -63,16 +64,19 @@ export default function Coach() {
         />
       ) : (
         <>
-          {coach.tips.map((tip) => (
+          {coach.tips.map((tip, index) => (
             <Card key={tip}>
-              <Text testID="tip" style={s.body}>
-                {tip}
-              </Text>
+              <View style={s.numberedRow}>
+                <Text style={s.number}>0{index + 1}</Text>
+                <Text testID="tip" style={[s.body, s.flexible]}>
+                  {tip}
+                </Text>
+              </View>
             </Card>
           ))}
-          <Text style={s.muted}>Mikro-görev</Text>
-          <Card>
-            <Text style={s.title}>{coach.task.title}</Text>
+          <Card tinted>
+            <Text style={s.eyebrow}>BUGÜNKÜ MİKRO-GÖREVİN</Text>
+            <Text style={s.subtitle}>{coach.task.title}</Text>
             {coach.task.steps.map((step, index) => (
               <Text key={step} style={s.body}>
                 {index + 1}. {step}
@@ -86,6 +90,7 @@ export default function Coach() {
             hint="Görevi tamamlandı olarak işaretler"
           />
           {problem ? <Text style={s.error}>{problem}</Text> : null}
+          <Btn label="Dengeme dön" variant="ghost" onPress={() => router.replace("/score")} />
         </>
       )}
     </Screen>

@@ -13,7 +13,7 @@ export const ACTIVITY_KEYS = [
   "periodStart",
   "paused",
   "focused",
-  "idle",
+  "idleState",
   "activeCategory",
   "since",
   "sentTotal",
@@ -27,7 +27,13 @@ export const DEFAULT_API_BASE = "http://localhost:3000";
 /** Safety-flush alarm: settles a long uninterrupted dwell. The send alarm is five times slower. */
 export const FLUSH_MINUTES = 1;
 export const SEND_MINUTES = 5;
-export const IDLE_SECONDS = 60;
+
+/**
+ * chrome.idle detection window. Three minutes is "walked away"; one minute is
+ * "read a long paragraph" — and the whole reason this tool exists is that the
+ * previous version under-counted, so a short window costs real minutes.
+ */
+export const IDLE_SECONDS = 180;
 
 /**
  * A segment longer than two flush windows means the machine slept or the service
@@ -51,8 +57,21 @@ export function categoryOfTab(tab) {
   }
 }
 
-/** Nothing accrues while paused, while no Chrome window has focus, or while the machine is idle/locked. */
-export const accruing = (state) => !state.paused && state.focused !== false && state.idle !== true;
+/**
+ * Nothing accrues while paused or while no Chrome window has focus. A locked
+ * screen is unambiguous and always stops accrual; plain "idle" only means no
+ * keyboard or mouse for IDLE_SECONDS, so it stops accrual only when the active
+ * tab is SILENT — a tab playing sound is being watched, not abandoned, and
+ * counting a twenty-minute video as idle is exactly the under-counting this
+ * extension was asked to fix.
+ * ponytail: a muted video still counts as idle; per-tab media state
+ * (mutedInfo plus a real media-playback signal) would be the upgrade.
+ */
+export const accruing = (state, audible = false) =>
+  !state.paused &&
+  state.focused !== false &&
+  state.idleState !== "locked" &&
+  (state.idleState !== "idle" || audible === true);
 
 const addSeconds = (seconds, category, n) =>
   n > 0 ? { ...seconds, [category]: (seconds[category] ?? 0) + n } : seconds;
@@ -62,12 +81,12 @@ const addSeconds = (seconds, category, n) =>
  * `category`; a missing category or a state that cannot accrue closes it. Pure:
  * every tab, focus, idle and alarm event funnels through this one function.
  */
-export function checkpoint(state, category, now) {
+export function checkpoint(state, category, now, audible = false) {
   const elapsed =
     state.activeCategory && typeof state.since === "number"
       ? Math.min(Math.floor((now - state.since) / 1000), MAX_SEGMENT_SECONDS)
       : 0;
-  const open = Boolean(category) && accruing(state);
+  const open = Boolean(category) && accruing(state, audible);
   return {
     ...state,
     seconds: addSeconds(state.seconds, state.activeCategory, elapsed),
@@ -125,7 +144,10 @@ export async function loadState(storage = chrome.storage.local) {
     periodStart: raw.periodStart ?? todayUtc(),
     paused: raw.paused === true,
     focused: raw.focused !== false,
-    idle: raw.idle === true,
+    // chrome.idle's own three-valued state. Anything else — a fresh profile, a
+    // key from an older build — reads as "active": the gate errs towards
+    // counting, never towards silently losing minutes.
+    idleState: raw.idleState === "idle" || raw.idleState === "locked" ? raw.idleState : "active",
     activeCategory: raw.activeCategory ?? null,
     since: typeof raw.since === "number" ? raw.since : null,
     sentTotal: raw.sentTotal ?? 0,
@@ -144,11 +166,11 @@ export async function loadSettings(storage = chrome.storage.sync) {
   return { apiBase: raw.apiBase || DEFAULT_API_BASE, token: raw.token || "" };
 }
 
-/** Category of the active tab of the focused window; the URL never leaves categoryOfTab. */
-export async function activeCategory() {
-  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  return tab ? categoryOfTab(tab) : null;
-}
+/**
+ * Active tab of the focused window. The Tab object stays a local: `settle` takes
+ * a category and a boolean from it and nothing else ever reaches storage.
+ */
+export const activeTab = async () => (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
 
 /**
  * Chrome dispatches tab, focus, idle and alarm events independently, so two
@@ -170,8 +192,13 @@ const serialize = (step) => (queue = queue.then(step, step));
  */
 async function settle(patch, now, fetchImpl) {
   const loaded = { ...(await loadState()), ...patch };
-  const category = accruing(loaded) ? await activeCategory() : null;
-  let state = checkpoint(loaded, category, now);
+  // One query answers both questions the gate asks: which category, and is that
+  // tab making sound. `audible` is already on the Tab objects this call returns,
+  // so it costs no extra permission.
+  const tab = await activeTab();
+  const audible = tab?.audible === true;
+  const category = accruing(loaded, audible) ? categoryOfTab(tab) : null;
+  let state = checkpoint(loaded, category, now, audible);
   const today = todayUtc(new Date(now));
   if (state.periodStart !== today) {
     // The day flips either way — the local accounting must not depend on

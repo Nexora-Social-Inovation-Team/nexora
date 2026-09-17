@@ -2,71 +2,45 @@
 <html lang="tr">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Nexora ayarları</title>
-    <style>
-      :root {
-        color-scheme: light;
-      }
-      body {
-        max-width: 32rem;
-        margin: 0 auto;
-        padding: 1.5rem;
-        background: #ffffff;
-        color: #14181f;
-        font: 1rem/1.5 system-ui, sans-serif;
-      }
-      label {
-        display: block;
-        margin: 1rem 0 0.25rem;
-        font-weight: 600;
-      }
-      input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #3b4451;
-        border-radius: 0.375rem;
-        font: inherit;
-      }
-      input:focus-visible,
-      button:focus-visible {
-        outline: 3px solid #0b46c0;
-        outline-offset: 2px;
-      }
-      .hint {
-        margin: 0.25rem 0 0;
-        color: #3b4451;
-        font-size: 0.875rem;
-      }
-      button {
-        margin-top: 1.25rem;
-        padding: 0.5rem 1rem;
-        border: 1px solid #1b4965;
-        border-radius: 0.375rem;
-        background: #1b4965;
-        color: #ffffff;
-        font: inherit;
-        cursor: pointer;
-      }
-      #status[data-state="error"] {
-        color: #8c1d18;
-        font-weight: 600;
-      }
-    </style>
+    <link rel="stylesheet" href="ui.css" />
   </head>
-  <body>
-    <h1>Nexora ayarları</h1>
-    <p>Eklenti yalnızca kategori dakikalarını gönderir; ham bağlantı toplanmaz.</p>
-    <label for="apiBase">API adresi</label>
-    <input id="apiBase" type="url" inputmode="url" placeholder="http://localhost:3000" />
-    <p class="hint">Varsayılan: http://localhost:3000</p>
-    <label for="token">Oturum anahtarı</label>
-    <input id="token" type="password" autocomplete="off" />
-    <p class="hint">
-      Anahtarı almak için README.md içindeki tek satırlık <code>POST /auth/login</code> komutunu çalıştır ve dönen
-      <code>token</code> değerini buraya yapıştır.
-    </p>
-    <button id="save" type="button">Kaydet</button>
-    <p id="status" role="status" aria-live="polite"></p>
+  <body class="options">
+    <div class="trust-strip">Ham bağlantı yok. Mesaj yok. Arama kaydı yok.</div>
+    <div class="settings-shell">
+      <header class="brand-row"><a class="brand" href="popup.html"><span class="mark" aria-hidden="true"></span>Nexora</a><span class="pill">Tarayıcı eklentisi</span></header>
+      <main>
+        <section class="hero">
+          <p class="eyebrow">BİR KEZ BAĞLA, KONTROL SENDE KALSIN</p>
+          <h1>Nexora ayarları</h1>
+          <p class="intro">Küçük bir bağlantı.<br />Dengeni anlamak için yeni bir başlangıç.</p>
+          <div class="hero-art settings-art" aria-hidden="true">
+            <span class="art-orbit"></span><span class="art-spark art-spark-one"></span><span class="art-spark art-spark-two"></span>
+            <span class="art-card"><span class="art-dots">•••</span><strong>✓</strong><small>kontrol sende</small></span>
+          </div>
+        </section>
+        <form id="settings-form" class="settings-card">
+          <div class="section-heading"><h2>Hesabına bağlan</h2><span class="pill">Demo</span></div>
+          <p class="hint">Kategori özetleri, veli onayı verilmiş hesabına gönderilir.</p>
+          <label for="apiBase">API adresi</label>
+          <input id="apiBase" type="url" inputmode="url" placeholder="http://localhost:3000" aria-describedby="api-hint" />
+          <p class="hint" id="api-hint">Demo sunucusu: http://localhost:3000</p>
+          <label for="token">Oturum anahtarı</label>
+          <input id="token" type="password" autocomplete="off" spellcheck="false" aria-describedby="token-hint" placeholder="Demo oturum anahtarını yapıştır" />
+          <p class="hint" id="token-hint">Demo hesabın için verilen anahtarı kullan. Bu alan sosyal medya şifreni istemez.</p>
+          <button id="save" type="submit">Bağlantıyı kaydet <span aria-hidden="true">→</span></button>
+          <p id="status" role="status" aria-live="polite"></p>
+        </form>
+        <aside class="privacy-card">
+          <p class="eyebrow">GİZLİLİK, EN BAŞINDAN</p>
+          <h2>Özetler paylaşılır. Geçmişin değil.</h2>
+          <p>Yalnızca kategori dakikaları gönderilir. Ham bağlantı, sayfa içeriği, mesaj ve arama kaydı toplanmaz.</p>
+          <p class="hint">Sayımı eklentiden duraklatabilir, cihazındaki kategori toplamlarını temizleyebilirsin.</p>
+        </aside>
+      </main>
+      <footer class="settings-footer">Ölç → Anla → Koçla → Üret</footer>
+    </div>
     <script type="module" src="options.js"></script>
   </body>
 </html>

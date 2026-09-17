@@ -23,6 +23,7 @@ import {
   unblockSending,
   update,
 } from "./core.js";
+import { GENERATED } from "./dictionary.generated.js";
 
 const dir = fileURLToPath(new URL(".", import.meta.url));
 
@@ -97,6 +98,23 @@ describe("categorize", () => {
     expect(categorize("")).toBeNull();
   });
 
+  it("falls back to registry-controlled suffixes but never guesses from keywords", () => {
+    expect(categorize("www.odtu.edu.tr")).toBe("science");
+    expect(categorize("mit.edu")).toBe("science");
+    expect(categorize("ozelokul.k12.tr")).toBe("science");
+    expect(categorize("icom.museum")).toBe("culture");
+    expect(categorize("sportsbet.example")).toBeNull();
+    expect(categorize("edu.example.com")).toBeNull();
+  });
+
+  it("uses the generated UT1 rows and never lets an inherited key match", () => {
+    expect(categorize("www.fifa.com")).toBe("sports");
+    expect(categorize("dailymotion.com")).toBe("entertainment");
+    expect(categorize("constructor")).toBeNull();
+    expect(categorize("toString.valueOf")).toBeNull();
+    expect(Object.values(GENERATED)).not.toContain("harmful");
+  });
+
   it("keeps the Turkish labels in sync with @nexora/shared", () => {
     expect(LABELS_TR).toEqual(CATEGORY_LABELS_TR);
   });
@@ -106,8 +124,8 @@ describe("second-accurate accounting", () => {
   let fake;
 
   /** One chrome event: the tab the user is looking at, at second `seconds`. */
-  const visit = (url, seconds, patch = {}) => {
-    fake.tab = url ? { url } : null;
+  const visit = (url, seconds, patch = {}, audible = false) => {
+    fake.tab = url ? { url, audible } : null;
     return update(patch, at(seconds));
   };
 
@@ -146,18 +164,44 @@ describe("second-accurate accounting", () => {
     expect((await update({}, at(330))).seconds).toEqual({ science: 60 });
   });
 
-  it("stops accruing while idle or locked and resumes on active", async () => {
+  it("stops accruing while idle with a SILENT tab and resumes on active", async () => {
     await visit(WIKI, 0);
-    let state = await visit(WIKI, 60, { idle: true }); // idle or locked
+    let state = await visit(WIKI, 60, { idleState: "idle" }); // no sound: really walked away
     expect(state.seconds).toEqual({ science: 60 });
     expect(state.activeCategory).toBeNull();
 
     state = await update({}, at(3600)); // an hour of idle flushes
     expect(state.seconds).toEqual({ science: 60 });
 
-    state = await update({ idle: false }, at(3600));
+    state = await update({ idleState: "active" }, at(3600));
     expect(state.activeCategory).toBe("science");
     expect((await update({}, at(3630))).seconds).toEqual({ science: 90 });
+  });
+
+  it("keeps counting while idle if the active tab is AUDIBLE, and stops when it goes silent", async () => {
+    await visit(YT, 0, {}, true);
+    // Twenty minutes of video without touching the keyboard: chrome says idle,
+    // the tab says it is playing, so the minutes keep counting.
+    let state = await visit(YT, 60, { idleState: "idle" }, true);
+    expect(state.activeCategory).toBe("entertainment");
+    for (let t = 120; t <= 1200; t += 60) state = await visit(YT, t, {}, true); // safety flushes
+    expect(state.seconds).toEqual({ entertainment: 1200 });
+
+    state = await visit(YT, 1260, {}, false); // the video ended, still nobody typing
+    expect(state.seconds).toEqual({ entertainment: 1260 });
+    expect(state.activeCategory).toBeNull();
+    expect((await visit(YT, 3600, {}, false)).seconds).toEqual({ entertainment: 1260 });
+
+    state = await visit(YT, 3600, { idleState: "active" }, false);
+    expect(state.activeCategory).toBe("entertainment");
+  });
+
+  it("stops accrual on a LOCKED screen even while the tab is audible", async () => {
+    await visit(YT, 0, {}, true);
+    const state = await visit(YT, 60, { idleState: "locked" }, true);
+    expect(state.seconds).toEqual({ entertainment: 60 });
+    expect(state.activeCategory).toBeNull();
+    expect((await visit(YT, 600, {}, true)).seconds).toEqual({ entertainment: 60 });
   });
 
   it("caps a single segment so a suspended machine cannot credit hours", async () => {
@@ -370,13 +414,13 @@ describe("concurrent events", () => {
 
     // idle.onStateChanged and tabs.onActivated: background.js floats both with
     // `void update()`, so neither waits for the other's load -> settle -> save.
-    const idled = update({ idle: true }, at(35));
+    const idled = update({ idleState: "idle" }, at(35));
     fake.tab = { url: YT };
     const switched = update({}, at(35));
     await Promise.all([idled, switched]);
 
     const state = await loadState();
-    expect(state.idle).toBe(true); // the idle flag reached storage
+    expect(state.idleState).toBe("idle"); // the idle flag reached storage
     expect(state.activeCategory).toBeNull(); // and accrual really stopped
     expect(state.seconds).toEqual({ science: 35 }); // nothing credited past the transition
   });
@@ -471,7 +515,7 @@ describe("background wiring", () => {
       { name: "nexora-flush", periodInMinutes: 1 },
       { name: "nexora-send", periodInMinutes: 5 },
     ]);
-    expect(bg.idle.detection).toBe(60);
+    expect(bg.idle.detection).toBe(180); // "walked away", not "read a long paragraph"
   });
 
   it("listens to every event that changes the situation", () => {
@@ -492,17 +536,28 @@ describe("background wiring", () => {
     expect(bg.dump.activeCategory).toBe("science");
   });
 
-  it("maps idle and locked to a stop and active to a resume", async () => {
+  it("stores chrome's idle state verbatim: idle and locked stop a silent tab, active resumes", async () => {
     for (const state of ["idle", "locked"]) {
       bg.listeners.idle(state);
       await settled();
-      expect(bg.dump.idle).toBe(true);
-      expect(bg.dump.activeCategory).toBeNull();
+      expect(bg.dump.idleState).toBe(state); // not collapsed to one boolean
+      expect(bg.dump.activeCategory).toBeNull(); // bg.tab is silent
     }
     bg.listeners.idle("active");
     await settled();
-    expect(bg.dump.idle).toBe(false);
+    expect(bg.dump.idleState).toBe("active");
     expect(bg.dump.activeCategory).toBe("science");
+  });
+
+  it("keeps an audible tab counting through idle but not through locked", async () => {
+    bg.tab = { url: WIKI, audible: true };
+    bg.listeners.idle("idle");
+    await settled();
+    expect(bg.dump.activeCategory).toBe("science"); // a video does not stop the clock
+
+    bg.listeners.idle("locked");
+    await settled();
+    expect(bg.dump.activeCategory).toBeNull(); // a locked screen does
   });
 
   it("only reacts to an onUpdated event that actually changed the url", async () => {

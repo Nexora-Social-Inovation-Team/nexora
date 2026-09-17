@@ -15,7 +15,8 @@ loadSettings().then(
   () => status("Ayarlar okunamadı.", "error"),
 );
 
-$("save").addEventListener("click", async () => {
+$("settings-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
   const apiBase = $("apiBase").value.trim() || DEFAULT_API_BASE;
   try {
     await chrome.storage.sync.set({ apiBase, token: $("token").value.trim() });

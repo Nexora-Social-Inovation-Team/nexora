@@ -14,7 +14,12 @@ export const Route = createRootRoute({
       { title: "NEXORA — Ölç → Anla → Koçla → Üret" },
       { name: "description", content: "13–18 yaş için yerli sosyal yapay zekâ. Ham URL yok." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      // Geist is the measured face; the token stack falls back to system-ui offline.
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap" },
+    ],
   }),
   component: RootDocument,
 });
@@ -31,7 +36,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:bg-surface focus:p-2">
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded-lg focus:border focus:border-line focus:bg-surface focus:p-2">
           {t("skipToContent")}
         </a>
         <QueryClientProvider client={queryClient}>

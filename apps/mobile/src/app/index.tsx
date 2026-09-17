@@ -1,9 +1,9 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 
 import { login } from "@/api";
-import { Btn, Card, KVKK_LINE, Screen, routeFor, s } from "@/ui";
+import { Btn, Card, Illustration, Journey, PageHeading, Screen, routeFor, s } from "@/ui";
 
 /** Screen 1 — onboarding. Copy: docs/DESIGN.md "1. Onboarding / katılım". */
 export default function Onboarding() {
@@ -21,9 +21,19 @@ export default function Onboarding() {
 
   return (
     <Screen hero>
-      <Text style={s.body}>Sosyal medyayı ölç, anla, küçük bir adım at.</Text>
+      <PageHeading eyebrow="SENİN ZAMANIN. SENİN DENGEN." title={"Dijital dünyada,\nkendine yer aç."} body="Sosyal medyayı ölç, anla, küçük bir adım at." />
+      <Illustration kind="welcome" />
+      <Card tinted>
+        <Text style={s.eyebrow}>BİR KÜÇÜK ADIMLA BAŞLAR</Text>
+        <Text style={s.subtitle}>Daha çok fark et. Kendin için üret.</Text>
+        <Journey current={0} />
+        <Text style={s.muted}>Kategori özetlerini keşfet, dengeni anla ve sana uygun kısa bir görev seç.</Text>
+      </Card>
+      <View style={s.numberedRow}>
+        <Text style={s.number}>01</Text>
+        <Text style={[s.muted, s.flexible]}>Önce veli onayı. Sonra yalnızca kategori özetleriyle sana ait bir yolculuk.</Text>
+      </View>
       <Btn label="Katıl" onPress={() => void join()} hint="Demo hesabıyla katıl" />
-      <Text style={s.muted}>{KVKK_LINE}</Text>
       <Btn
         label="Verilerim nasıl kullanılır?"
         variant="ghost"

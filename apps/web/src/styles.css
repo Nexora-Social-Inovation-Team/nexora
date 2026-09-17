@@ -1,28 +1,45 @@
 @import "tailwindcss";
 
-/* Tokens: docs/DESIGN.md "Visual tokens (starter)". */
+/*
+ * Tokens measured off calendly.com through a1.gallery
+ * (www.a1.gallery/website/calendly, section designTokens): beige page, white
+ * cards on a hairline, navy ink, navy CTA, one blue reserved for links and
+ * focus, Geist at weight 500 with -0.033em tracking for headings.
+ *
+ * This replaces the dark starter palette that docs/DESIGN.md shipped with;
+ * that table is updated to match. Contrast ratios are noted per token because
+ * item 6 of docs/DESIGN.md is a gate, not a preference.
+ */
 @theme {
-  --color-bg: #0f1412;
-  --color-surface: #1a221c;
-  --color-text: #f4f1ea;
-  --color-muted: #a7b0a1;
-  --color-accent: #c4f542;
-  --color-warn: #e4b44c;
-  --color-danger: #d45d4a;
-  --font-display: Fraunces, Georgia, "Times New Roman", serif;
-  --font-ui: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-bg: #fcfbf8; /* page */
+  --color-band: #f1efe9; /* beige hero / section band */
+  --color-surface: #ffffff; /* cards, always on a --line border */
+  --color-line: #e4e0d8; /* hairline, non-text */
+  --color-tint: #e7eefb; /* light-blue pill and panel surface, 14:1 with --text */
+  --color-text: #071a31; /* 16:1 on --bg */
+  --color-muted: #4d5f74; /* 6.3:1 on --bg, 6.5:1 on --surface */
+  --color-accent: #071a31; /* CTA fill; --bg text on it is 16:1 */
+  --color-link: #0b5fd0; /* 5.8:1 on --surface */
+  --color-warn: #8a5a00; /* 5.9:1 on --surface */
+  --color-danger: #b3261e; /* 6.5:1 on --surface */
+  --font-display: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ui: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* The doc names the tokens without the Tailwind `--color-` prefix; keep both. */
 :root {
   --bg: var(--color-bg);
+  --band: var(--color-band);
   --surface: var(--color-surface);
+  --line: var(--color-line);
+  --tint: var(--color-tint);
   --text: var(--color-text);
   --muted: var(--color-muted);
   --accent: var(--color-accent);
+  --link: var(--color-link);
   --warn: var(--color-warn);
   --danger: var(--color-danger);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @layer base {
@@ -30,16 +47,40 @@
     background-color: var(--bg);
     color: var(--text);
     font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Visible focus on dark. */
+  /* Blue, not navy: the ring has to read against navy buttons too. */
   :focus-visible {
-    outline: 3px solid var(--accent);
+    outline: 3px solid var(--link);
     outline-offset: 2px;
   }
 
+  /*
+   * The footer section a1 measured sits at weight 500; the hero and the section
+   * headings on the reference pages are visibly heavier, so 600 is the default
+   * and the footer statement opts back down.
+   */
   h1,
-  h2 {
+  h2,
+  h3 {
     font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.033em;
+    line-height: 1.1;
   }
+
+  /* Small body on a narrow measure is half of what makes the reference read editorial. */
+  p {
+    line-height: 1.6;
+  }
+}
+
+/* Small caps label above a heading — the one Calendly move that is not a token. */
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
 }

@@ -52,3 +52,5 @@ apps/api/prisma/migrations/    initial
 - [ ] `GET /health` returns `{ "ok": true, "db": true }`.
 - [ ] Schema matches Architecture (User, ConsentEvent, CategorySummary, Score, Task, CoachRecommendation, DeletionRequest).
 - [ ] CORS allows the web origin from env.
+
+**Verified live on Neon — 2026-09-17:** `db:generate`, then `migrate deploy` applied `20260916000000_init` and `migrate status` reported "Database schema is up to date!"; `db:seed` wrote the 6 demo users; `GET /health` answered `{"ok":true,"db":true}` over the pooled `DATABASE_URL`. No `?pgbouncer=true` was needed — no 42P05 appeared across the full smoke run.

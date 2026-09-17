@@ -53,3 +53,5 @@ No content script that reads `document.body`.
 - [ ] Visiting wikipedia vs youtube changes the local minute counts.
 - [ ] POST succeeds against local API for an **active** youth token.
 - [ ] Storage has no URL strings (automated test or a documented `jq` inspection step).
+
+**Verified live on Neon — 2026-09-17:** `sendSummary()` from `core.js` POSTed to the live API on `http://localhost:3000` — 403 `consent_missing` for a pending youth, 400 `validation_error` for a body carrying a `url` key, 201 with score 80 for an **active** youth token. The weekly report it feeds carries no `url` / `hostname` / `path` / `domain` key at any depth.

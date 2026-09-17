@@ -8,12 +8,24 @@ import { z } from "zod";
  * `bun --env-file=../../.env`. Bun does not walk up to find it, and neither
  * does the Prisma CLI (it only checks ./ , the --schema dir and ./prisma).
  */
+/**
+ * Optional secret. `bun --env-file` turns a bare `HF_TOKEN=` line — exactly the
+ * shape of .env.example — into an empty string, which `.min(1).optional()`
+ * reads as present-and-invalid: the API then refused to boot instead of
+ * falling back. Empty means unset (docs/building-blocks/04: the jury demo runs
+ * with HF_TOKEN unset).
+ */
+const optionalEnv = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.string().min(1).optional(),
+);
+
 const envSchema = z.object({
   // Neon pooled URL. Prisma reads it itself via env("DATABASE_URL"); parsed
   // here only so a missing value fails at boot.
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required (Neon pooled connection string)"),
   // Neon direct URL. Used by `prisma migrate`, never by the runtime client.
-  DIRECT_URL: z.string().min(1).optional(),
+  DIRECT_URL: optionalEnv,
   PORT: z.coerce.number().int().positive().default(3000),
   WEB_ORIGIN: z
     .string()
@@ -21,8 +33,8 @@ const envSchema = z.object({
     .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
   SESSION_SECRET: z.string().min(1, "SESSION_SECRET is required to sign sessions"),
   // API-process only. Never shipped to web, mobile or extension.
-  HF_TOKEN: z.string().min(1).optional(),
-  HF_MODEL_ID: z.string().min(1).optional(),
+  HF_TOKEN: optionalEnv,
+  HF_MODEL_ID: optionalEnv,
 });
 
 const parsed = envSchema.safeParse(process.env);

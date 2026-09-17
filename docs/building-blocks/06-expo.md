@@ -61,3 +61,5 @@ If e2e time is short, document a manual script in block 08 and still keep RNTL f
 - [ ] Pending status cannot see score.
 - [ ] Three personas show different scores/tips (after seed).
 - [ ] Complete task → `task.status` completed on `GET /reports/weekly`.
+
+**Verified live on Neon — 2026-09-17:** driven through the real `apps/mobile/src/api.ts` client against the live API — a pending Deniz is refused score, coach and report with 403 `consent_missing`; after Ece approves, the three personas score 80 / 38 / 93 with coach tips that differ by band; completing the coach task flipped `GET /reports/weekly` `task.status` to `completed`.

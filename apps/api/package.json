@@ -7,8 +7,9 @@
     "dev": "bun --env-file=../../.env --watch src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "bun --env-file=../../.env x prisma migrate deploy",
-    "db:generate": "bun --env-file=../../.env x prisma generate",
+    "db:migrate": "bun --env-file=../../.env node_modules/prisma/build/index.js migrate deploy",
+    "db:generate": "bun --env-file=../../.env node_modules/prisma/build/index.js generate",
+    "db:status": "bun --env-file=../../.env node_modules/prisma/build/index.js migrate status",
     "db:seed": "bun --env-file=../../.env prisma/seed.ts"
   },
   "dependencies": {

@@ -77,3 +77,5 @@ After Zod: if any string matches diagnostic terms (`teşhis`, `depresyon tanıs�
 - [ ] Unset token still returns 200 valid coach JSON (fallback).
 - [ ] Three score bands produce three different fallback tasks.
 - [ ] Task row exists for `POST /tasks/:id/complete` (block 06/08).
+
+**Verified live on Neon — 2026-09-17:** with `HF_TOKEN` and `HF_MODEL_ID` unset, `GET /coach/recommendation` answered 200 + `X-Nexora-Coach: fallback` and a schema-valid 3-tip payload for all three personas (80 / 38 / 93), and the `<50` band tips differ from the `>=80` band. The model path is still unproven and blocked on the provider, not on this block: `GET https://router.huggingface.co/v1/models` returns 200 for our token but lists no Trendyol id among the 143 served models, so `HF_MODEL_ID` has no inference provider today.

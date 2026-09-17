@@ -151,12 +151,24 @@ export async function activeCategory() {
 }
 
 /**
+ * Chrome dispatches tab, focus, idle and alarm events independently, so two
+ * unserialized load -> settle -> [POST] -> save cycles overlap and the later
+ * save silently clobbers the newer state: an idle transition lost to a tab
+ * switch, or a tab switch reverted by the auto-send that was still in its round
+ * trip. Every entry point below queues here instead, so a late event re-reads
+ * the post-send state. ponytail: one global chain, not per-key locks — one
+ * service worker, one storage area. The popup is a separate realm and shares no
+ * chain; it only writes on a click.
+ */
+let queue = Promise.resolve();
+const serialize = (step) => (queue = queue.then(step, step));
+
+/**
  * The single write path: apply a flag change, settle the elapsed segment,
  * re-point the checkpoint, and roll the UTC day over (sending the finished day
- * first). Two events in the same tick compute the same settle, so the last
- * write wins harmlessly.
+ * first). Call it only from inside `serialize`.
  */
-export async function update(patch = {}, now = Date.now(), fetchImpl = fetch) {
+async function settle(patch, now, fetchImpl) {
   const loaded = { ...(await loadState()), ...patch };
   const category = accruing(loaded) ? await activeCategory() : null;
   let state = checkpoint(loaded, category, now);
@@ -169,6 +181,10 @@ export async function update(patch = {}, now = Date.now(), fetchImpl = fetch) {
   await saveState(state);
   return state;
 }
+
+/** Every tab, focus, idle and alarm event funnels through this one serialized write. */
+export const update = (patch = {}, now = Date.now(), fetchImpl = fetch) =>
+  serialize(() => settle(patch, now, fetchImpl));
 
 /** Sends category minutes only. Failures are values, not throws. */
 export async function sendSummary({ apiBase, token, body }, fetchImpl = fetch) {
@@ -210,31 +226,34 @@ export async function deliver(state, settings, now = Date.now(), fetchImpl = fet
 }
 
 /** The send alarm: settle first, then one cumulative POST when there is something new to say. */
-export async function autoSend(now = Date.now(), fetchImpl = fetch) {
-  const state = await update({}, now, fetchImpl);
-  const settings = await loadSettings();
-  if (!shouldAutoSend(state, settings)) return state;
-  const next = await deliver(state, settings, now, fetchImpl);
-  await saveState(next);
-  return next;
-}
+export const autoSend = (now = Date.now(), fetchImpl = fetch) =>
+  serialize(async () => {
+    const state = await settle({}, now, fetchImpl);
+    const settings = await loadSettings();
+    if (!shouldAutoSend(state, settings)) return state;
+    const next = await deliver(state, settings, now, fetchImpl);
+    await saveState(next);
+    return next;
+  });
 
 /** "Şimdi gönder": always attempts, lifts the block, never clears the accumulator. */
-export async function sendNow(now = Date.now(), fetchImpl = fetch) {
-  const state = { ...(await update({}, now, fetchImpl)), sendBlocked: false };
-  const next = await deliver(state, await loadSettings(), now, fetchImpl);
-  await saveState(next);
-  return next;
-}
+export const sendNow = (now = Date.now(), fetchImpl = fetch) =>
+  serialize(async () => {
+    const state = { ...(await settle({}, now, fetchImpl)), sendBlocked: false };
+    const next = await deliver(state, await loadSettings(), now, fetchImpl);
+    await saveState(next);
+    return next;
+  });
 
 /** A settings change (new key, new address) lifts the auto-send block. */
-export async function unblockSending() {
-  const state = await loadState();
-  if (!state.sendBlocked) return state;
-  const next = { ...state, sendBlocked: false };
-  await saveState(next);
-  return next;
-}
+export const unblockSending = () =>
+  serialize(async () => {
+    const state = await loadState();
+    if (!state.sendBlocked) return state;
+    const next = { ...state, sendBlocked: false };
+    await saveState(next);
+    return next;
+  });
 
 /** Turkish popup line for a send result; `null` means the request never left the browser. */
 export function resultMessageTr(result) {

@@ -43,9 +43,21 @@ function fakeChrome(initial = {}) {
   const on = (name) => ({ addListener: (fn) => (listeners[name] = fn) });
   const pick = (store, keys) =>
     keys ? Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]])) : { ...store };
-  const area = (store) => ({ get: async (keys) => pick(store, keys), set: async (obj) => void Object.assign(store, obj) });
+  /** chrome.storage is IPC, not a memory write: `storageDelay` gives get/set a real async gap. */
+  const gap = () => (fake.storageDelay ? new Promise((resolve) => setTimeout(resolve, fake.storageDelay)) : null);
+  const area = (store) => ({
+    get: async (keys) => {
+      await gap();
+      return pick(store, keys);
+    },
+    set: async (obj) => {
+      await gap();
+      Object.assign(store, obj);
+    },
+  });
   const fake = {
     dump: local,
+    storageDelay: 0,
     sync,
     listeners,
     tab: null,
@@ -313,6 +325,58 @@ describe("cumulative sending", () => {
     await dwell(0, 600);
     await autoSend(at(600), record(ok201));
     expect(posts).toHaveLength(0);
+  });
+});
+
+describe("concurrent events", () => {
+  let fake;
+
+  beforeEach(() => {
+    fake = fakeChrome({ periodStart: DAY });
+    fake.storageDelay = 8; // a chrome.storage.local round trip, not a memory write
+    globalThis.chrome = fake;
+  });
+
+  it("does not lose an idle transition to a tab switch fired in the same instant", async () => {
+    fake.tab = { url: WIKI };
+    await update({}, at(0));
+
+    // idle.onStateChanged and tabs.onActivated: background.js floats both with
+    // `void update()`, so neither waits for the other's load -> settle -> save.
+    const idled = update({ idle: true }, at(35));
+    fake.tab = { url: YT };
+    const switched = update({}, at(35));
+    await Promise.all([idled, switched]);
+
+    const state = await loadState();
+    expect(state.idle).toBe(true); // the idle flag reached storage
+    expect(state.activeCategory).toBeNull(); // and accrual really stopped
+    expect(state.seconds).toEqual({ science: 35 }); // nothing credited past the transition
+  });
+
+  it("keeps a tab switch that lands inside the auto-send round trip", async () => {
+    const posts = [];
+    const slowFetch = async (_url, init) => {
+      posts.push(JSON.parse(init.body));
+      await new Promise((resolve) => setTimeout(resolve, 150)); // an ordinary HTTP latency
+      return { status: 201, json: async () => ({ id: "sig_1", score: { value: 80 } }) };
+    };
+    fake.sync.token = "tok";
+    fake.tab = { url: WIKI };
+    for (let t = 0; t <= 300; t += 60) await update({}, at(t)); // five minutes of science
+
+    const sending = autoSend(at(300), slowFetch);
+    await new Promise((resolve) => setTimeout(resolve, 60)); // the user switches mid-send
+    fake.tab = { url: YT };
+    const switched = update({}, at(360));
+    await Promise.all([sending, switched]);
+
+    const state = await loadState();
+    expect(posts).toEqual([{ period: `${DAY}/${DAY}`, minutes: { science: 5 } }]);
+    expect(state.sentTotal).toBe(5);
+    expect(state.activeCategory).toBe("entertainment"); // the switch was not reverted
+    expect(state.since).toBe(at(360));
+    expect(state.seconds).toEqual({ science: 360 });
   });
 });
 

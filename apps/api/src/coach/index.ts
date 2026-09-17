@@ -114,7 +114,11 @@ async function modelCoach(youthId: string, score: ScoreRow): Promise<Coach | nul
           { role: "user", content: prompt },
         ],
         temperature: 0.3,
-        max_tokens: 500,
+        // Reasoning models (Qwen3 and friends) spend this budget on
+        // `reasoning_content` first and only then write `content`. Measured
+        // against Qwen/Qwen3-8B: 500 returns a null or truncated body every
+        // time, 900 returns valid coach JSON in ~3.8s.
+        max_tokens: 900,
         stream: false,
       }),
       // ponytail: no retry. The fallback is the retry, and the demo cannot wait

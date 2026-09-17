@@ -269,8 +269,10 @@ Never: diagnosis, “bağımlılık”, “kötü çocuk”, URLs, hostnames.
 
 ## LLM boundary
 
-- Provider: HuggingFace Inference, Trendyol-LLM (exact model id in env `HF_MODEL_ID`, token `HF_TOKEN`).
-- Temperature low (≤ 0.4). Max tokens small enough for the JSON object.
+- Provider: HuggingFace Inference router (exact model id in env `HF_MODEL_ID`, token `HF_TOKEN`). The code is model-agnostic: it sends OpenAI-style chat completions and judges the answer by the schema, not by the vendor.
+- **Trendyol-LLM is not callable today** (verified 2026-09-17): the router lists 143 served models and no inference provider serves any Trendyol id, so `router.huggingface.co` cannot route to it. Keeping it would mean renting a dedicated HF Inference Endpoint. The demo therefore runs `Qwen/Qwen3-8B`, which speaks Turkish and satisfies the coach schema about three times in four; the rest fall back, which is the designed behaviour. Swap `HF_MODEL_ID` back the day a provider serves Trendyol.
+- Temperature low (≤ 0.4). Token budget must cover a **reasoning** pass: Qwen3-class models fill `reasoning_content` first and leave `content` null if the budget runs out, so 500 returned nothing every time and 900 returns valid JSON.
+- HF's free monthly credit is small; once it is depleted the router answers `402` and every coach call falls back. That is a cost signal, not an outage.
 - Ask for **JSON only** matching the coach schema.
 - Validate with Zod. On failure: canned fallback (see building block 04).
 - Safe-language post-check: reject output containing diagnostic phrases; fallback.

@@ -408,6 +408,27 @@ describe("GET /coach/recommendation — model vs fallback", () => {
     expect(recommendations[0]).toMatchObject({ source: "fallback", taskId: body.task_id });
   });
 
+  it("falls back when a reasoning model spends the whole budget on reasoning_content", async () => {
+    // Measured against Qwen/Qwen3-8B through the HF router: a reasoning model
+    // fills `reasoning_content` first and leaves `content` null when max_tokens
+    // runs out, so the budget has to be big enough for both passes.
+    hfFetch.mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ finish_reason: "length", message: { content: null, reasoning_content: "Kullanıcı bir JSON istiyor…" } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const body = await expectFallback(await getCoach());
+    expect(body.task.title).toBe(COACH_FALLBACKS.high.task.title);
+
+    const sent = JSON.parse(String((hfFetch.mock.calls[0]?.[1] as RequestInit | undefined)?.body ?? "{}"));
+    expect(sent.max_tokens).toBeGreaterThanOrEqual(900);
+  });
+
   it("uses the model answer when HuggingFace returns valid JSON", async () => {
     modelReturns(MODEL_COACH);
 

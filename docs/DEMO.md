@@ -111,8 +111,9 @@ Stated honestly: the extension is **not** wired into the demo automatically.
    ```
    Copy the `token` field into the options page.
 3. The popup then shows Turkish **category totals** and nothing else — that is the whole point of
-   showing it. Its `"Özeti gönder"` button posts real browsing minutes, which are not the DESIGN
-   numbers, so use it to show the shape of the data, not to drive the score.
+   showing it. It also sends on its own every five minutes, and its `"Şimdi gönder"` button posts
+   the running total immediately — real browsing minutes, which are not the DESIGN numbers, so use
+   it to show the shape of the data, not to drive the score.
 
 `manifest.json` grants host access to `http://localhost:3000/*` only. Pointing the extension at any
 other API origin also means adding that origin to `host_permissions`.

@@ -66,6 +66,10 @@
         margin: 0.75rem 0 0;
         color: #3b4451;
       }
+      #last[data-state="error"] {
+        color: #8c1d18; /* 7.6:1 on white */
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -73,10 +77,11 @@
     <p id="status" role="status" aria-live="polite" data-state="loading">Yükleniyor…</p>
     <ul id="minutes" aria-label="Kategori dakikaları" hidden></ul>
     <div class="controls">
-      <button id="send" type="button">Özeti gönder</button>
+      <button id="send" type="button">Şimdi gönder</button>
       <button id="pause" type="button" class="secondary">Duraklat</button>
       <button id="clear" type="button" class="secondary">Temizle</button>
     </div>
+    <p id="last" class="note" aria-live="polite"></p>
     <p class="note">Ham bağlantı toplanmaz; yalnızca kategori dakikaları.</p>
     <script type="module" src="popup.js"></script>
   </body>

@@ -47,6 +47,8 @@ No content script that reads `document.body`.
 - Firefox is out of scope.
 - Not a blocker for the 5–7 min demo if seed is ready; still ship the extension as a jury artifact (load unpacked).
 
+**Implemented beyond the minimum — 2026-09-17:** the periodic-alarm send path this block allows is live. Accounting is event-driven and second-accurate (tab / focus / idle events with a 1-minute safety flush), and the old flat "+1 minute per tick" ceiling is lifted; a 5-minute alarm posts the cumulative period total on its own, and the UTC day rollover sends the finished day. See `apps/extension/README.md`.
+
 ## Done when
 
 - [ ] Unpacked load in Chrome.

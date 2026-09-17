@@ -1,87 +1,73 @@
-/* global document */
+/* global chrome, document */
 import {
   LABELS_TR,
-  buildSummaryBody,
-  clearMinutes,
-  loadSettings,
+  clearActivity,
   loadState,
-  resultMessageTr,
+  minutesLabelTr,
   saveState,
-  sendSummary,
-  todayUtc,
+  sendNow,
+  update,
 } from "./core.js";
 
 const $ = (id) => document.getElementById(id);
-const statusEl = $("status");
 
 function setStatus(text, state) {
-  statusEl.textContent = text;
-  statusEl.dataset.state = state;
+  $("status").textContent = text;
+  $("status").dataset.state = state;
 }
 
 function render(state) {
-  const entries = Object.entries(state.minutes).filter(([, n]) => n > 0);
+  const entries = Object.entries(state.seconds).filter(([, seconds]) => seconds > 0);
   const list = $("minutes");
   list.replaceChildren(
-    ...entries.map(([category, n]) => {
+    ...entries.map(([category, seconds]) => {
       const li = document.createElement("li");
       const label = document.createElement("span");
       label.textContent = LABELS_TR[category] ?? category;
       const value = document.createElement("strong");
-      value.textContent = `${n} dk`;
+      value.textContent = minutesLabelTr(seconds);
       li.append(label, value);
       return li;
     }),
   );
   list.hidden = entries.length === 0;
   $("pause").textContent = state.paused ? "Devam et" : "Duraklat";
+
+  const sent = state.lastSentAt
+    ? `Son gönderim: ${new Date(state.lastSentAt).toLocaleTimeString("tr-TR")}`
+    : "Henüz gönderilmedi.";
+  $("last").textContent = state.lastStatus ? `${sent} — ${state.lastStatus}` : sent;
+  $("last").dataset.state = state.sendBlocked ? "error" : "ok";
+
   if (entries.length === 0) {
     setStatus("Henüz kategori dakikası yok. Tarayıcıda gezindikçe burada birikir.", "empty");
+  } else if (state.paused) {
+    setStatus("Duraklatıldı.", "ready");
   } else {
-    setStatus(state.paused ? "Duraklatıldı." : `Sayım sürüyor (${state.periodStart} başlangıçlı).`, "ready");
+    setStatus(`Sayım sürüyor (${state.periodStart} başlangıçlı).`, "ready");
   }
-}
-
-async function update(next) {
-  await saveState(next);
-  render(next);
-  return next;
-}
-
-async function send() {
-  const [state, settings] = await Promise.all([loadState(), loadSettings()]);
-  const body = buildSummaryBody(state, todayUtc());
-  if (!Object.values(body.minutes).some((n) => n > 0)) {
-    setStatus("Gönderilecek kategori dakikası yok.", "empty");
-    return;
-  }
-  if (!settings.token) {
-    setStatus("Önce ayarlardan oturum anahtarını gir.", "error");
-    return;
-  }
-  setStatus("Gönderiliyor…", "loading");
-  let result = null;
-  try {
-    result = await sendSummary({ ...settings, body });
-  } catch {
-    result = null; // network/CORS failure: no details are logged
-  }
-  if (result?.status === 201) {
-    await update(clearMinutes(state));
-  }
-  setStatus(resultMessageTr(result), result?.status === 201 ? "ready" : "error");
 }
 
 async function main() {
-  const state = await loadState();
-  render(state);
-  $("send").addEventListener("click", () => void send());
+  render(await loadState());
+
+  // An open popup follows the service worker live.
+  chrome.storage.onChanged.addListener((_changes, area) => {
+    if (area === "local") void loadState().then(render);
+  });
+
+  $("send").addEventListener("click", async () => {
+    $("last").textContent = "Gönderiliyor…";
+    render(await sendNow());
+  });
   $("pause").addEventListener("click", async () => {
     const current = await loadState();
-    await update({ ...current, paused: !current.paused });
+    render(await update({ paused: !current.paused })); // settles first, then stops accruing
   });
   $("clear").addEventListener("click", async () => {
-    await update(clearMinutes(await loadState()));
+    const cleared = clearActivity(await loadState());
+    await saveState(cleared);
+    render(cleared);
   });
 }
 

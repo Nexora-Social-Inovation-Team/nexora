@@ -319,6 +319,33 @@ describe("cumulative sending", () => {
     expect(state.lastStatus).toBe("Özet gönderildi. Skorun: 80");
   });
 
+  it("does not turn the UTC day rollover into a retry for a blocked account", async () => {
+    await visit(WIKI, 0);
+    await dwell(0, 600);
+    await autoSend(at(600), record(deny403));
+    expect(posts).toHaveLength(1);
+    expect((await loadState()).sendBlocked).toBe(true);
+
+    // An ordinary tab event just after midnight: neither a settings change nor Şimdi gönder.
+    fake.tab = { url: WIKI };
+    const rolled = await update({}, Date.UTC(2026, 8, 18, 0, 0, 30), record(ok201));
+    expect(posts).toHaveLength(1); // the finished day is dropped, not posted
+    expect(rolled.sendBlocked).toBe(true);
+    expect(rolled.periodStart).toBe("2026-09-18"); // the local day still flips
+    expect(rolled.seconds).toEqual({});
+    expect(rolled.sentTotal).toBe(0);
+    expect(rolled.activeCategory).toBe("science");
+
+    for (const minute of [1, 2, 3]) await update({}, Date.UTC(2026, 8, 18, 0, minute, 30), record(ok201));
+    await autoSend(Date.UTC(2026, 8, 18, 0, 3, 30), record(ok201));
+    expect(posts).toHaveLength(1); // and the new day stays quiet too
+
+    const sent = await sendNow(Date.UTC(2026, 8, 18, 0, 3, 40), record(ok201));
+    expect(posts).toHaveLength(2); // a manual press is still the way out
+    expect(posts[1].body).toEqual({ period: "2026-09-18/2026-09-18", minutes: { science: 3 } });
+    expect(sent.sendBlocked).toBe(false);
+  });
+
   it("does not auto-send without a token", async () => {
     delete fake.sync.token;
     await visit(WIKI, 0);

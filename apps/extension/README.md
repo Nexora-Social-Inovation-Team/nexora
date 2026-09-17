@@ -38,7 +38,9 @@ the last POST carried — posting only the newest chunk would shrink the day. Fo
 
 On `401 unauthorized` or `403 consent_missing` (a youth whose parent has not approved yet) the
 automatic sender stops instead of retrying: the block lifts when the options page saves new
-settings, or when the user presses **Şimdi gönder**. Failure bodies are never logged.
+settings, or when the user presses **Şimdi gönder**. A UTC day rollover is not one of those two
+triggers: the day still flips locally, but the finished day is dropped instead of posted, so a
+pending or revoked youth cannot turn midnight into a daily retry. Failure bodies are never logged.
 
 ## Load unpacked
 

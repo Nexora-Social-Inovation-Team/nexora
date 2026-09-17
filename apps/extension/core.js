@@ -166,7 +166,7 @@ const serialize = (step) => (queue = queue.then(step, step));
 /**
  * The single write path: apply a flag change, settle the elapsed segment,
  * re-point the checkpoint, and roll the UTC day over (sending the finished day
- * first). Call it only from inside `serialize`.
+ * first, unless sending is blocked). Call it only from inside `serialize`.
  */
 async function settle(patch, now, fetchImpl) {
   const loaded = { ...(await loadState()), ...patch };
@@ -174,9 +174,15 @@ async function settle(patch, now, fetchImpl) {
   let state = checkpoint(loaded, category, now);
   const today = todayUtc(new Date(now));
   if (state.periodStart !== today) {
+    // The day flips either way — the local accounting must not depend on
+    // whether the network attempt was allowed — but a blocked account is not
+    // retried by the clock: only a settings change or Şimdi gönder lifts it.
     // ponytail: up to one flush window of post-midnight time lands in the
-    // finished day. Upgrade path: split the segment at the day boundary.
-    state = startPeriod(await deliver(state, await loadSettings(), now, fetchImpl), today);
+    // finished day, and a blocked account's finished day is dropped rather than
+    // queued. Upgrade path: split the segment at the day boundary and keep one
+    // unsent period aside.
+    const sent = state.sendBlocked ? state : await deliver(state, await loadSettings(), now, fetchImpl);
+    state = startPeriod(sent, today);
   }
   await saveState(state);
   return state;

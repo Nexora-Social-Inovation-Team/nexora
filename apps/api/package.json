@@ -10,7 +10,8 @@
     "db:migrate": "bun --env-file=../../.env node_modules/prisma/build/index.js migrate deploy",
     "db:generate": "bun --env-file=../../.env node_modules/prisma/build/index.js generate",
     "db:status": "bun --env-file=../../.env node_modules/prisma/build/index.js migrate status",
-    "db:seed": "bun --env-file=../../.env prisma/seed.ts"
+    "db:seed": "bun --env-file=../../.env prisma/seed.ts",
+    "demo:ingest-balanced": "bun --env-file=../../.env prisma/demo-ingest.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",

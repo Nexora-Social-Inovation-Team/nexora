@@ -12,6 +12,7 @@ Agent entry: [`../AGENTS.md`](../AGENTS.md). Sources: [`SOURCES.md`](SOURCES.md)
 | [`PRIVACY.md`](PRIVACY.md) | KVKK data contract — treat as law |
 | [`API.md`](API.md) | REST v0.5 paths and JSON |
 | [`PHASES.md`](PHASES.md) | Product A/B/C + engineering order 00–08 |
+| [`DEMO.md`](DEMO.md) | Jury runbook — setup, state after `db:seed`, the eight beats, failure drills |
 
 ## Building blocks (Phase A)
 

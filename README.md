@@ -19,7 +19,7 @@ This repository is in a **docs-first** state. Product decisions are distilled fr
 
 **A — Competition MVP.** One demo path: youth app → parent consent → category summaries → explainable Feed Health Score → Trendyol-LLM coach → weekly parent/teacher report.
 
-Blocks [00–07](docs/building-blocks/) are implemented and pass typecheck, lint and tests: the API, web panel, mobile app and extension all run. Block 08 (demo seed) is still pending. Follow [`docs/PHASES.md`](docs/PHASES.md).
+Blocks [00–08](docs/building-blocks/) are implemented and pass typecheck, lint and tests: the API, web panel, mobile app and extension all run, and one command puts the database on slide 1 of the jury script. Run the demo from [`docs/DEMO.md`](docs/DEMO.md). Follow [`docs/PHASES.md`](docs/PHASES.md).
 
 ## Workspace
 
@@ -31,6 +31,24 @@ bun run lint
 ```
 
 Shared Zod contract in `packages/shared`, score rules in `packages/score` (block 03). Copy `.env.example` to `.env`; never commit it.
+
+## Demo
+
+Neon only — there is no local database. Copy `.env.example` to `.env` at the repo root first, then:
+
+```bash
+bun run --filter nexora-api db:generate    # Prisma client (mandatory on a fresh checkout)
+bun run --filter nexora-api db:migrate     # migrate deploy
+bun run --filter nexora-api db:seed        # reset the demo: Deniz pending, Riskli 38, Üretken 93
+
+bun run --filter nexora-api dev            # API  :3000   (curl http://localhost:3000/health)
+bun run --filter nexora-web dev            # web  :5173
+
+bun run demo:ingest-balanced               # post Deniz's balanced week (80) and fetch the coach
+bun run demo:e2e                           # reseed, then drive the whole jury path in a browser
+```
+
+Full runbook, including what to say when HuggingFace is down: [`docs/DEMO.md`](docs/DEMO.md).
 
 ## Read in this order
 

@@ -12,6 +12,9 @@ export default tseslint.config(
       "**/.expo/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      // Workflow scripts: `agent`/`phase`/`parallel`/`log` are runtime globals
+      // injected by the Claude Code workflow host, not app code to lint.
+      "**/.claude/**",
     ],
   },
   js.configs.recommended,

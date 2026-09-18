@@ -15,12 +15,12 @@ One command loads three youth weeks. A 5–7 minute script a human can run witho
 Idempotent upserts:
 
 1. Users from block 02.
-2. Parent approval for all three Deniz variants (demo starts **already approved** *or* the script has a flag `--approve` used in the jury path that starts pending — **jury path should include one live approve**).
+2. Parent approval for the two switcher variants. Deniz himself starts **pending** so the jury path includes one live approve; `db:seed -- --approve` starts him active instead, for rehearsals and for a full database in two commands (`db:seed -- --approve`, then `demo:ingest-balanced`).
 
 **Jury-recommended state after seed:**
 
 - `usr_deniz` (`deniz_balanced`) = `pending_parent_consent`, **no** summary yet.
-- `usr_deniz_risky` and `usr_deniz_productive` = `active` with minutes already stored (for the panel switcher).
+- `usr_deniz_risky` and `usr_deniz_productive` = `active` with **four** weeks stored each (53 → 67 → 80 → 38 / 93, so the trend is a line, not two points), plus a task and a coach row carrying the canned `share_text` for that band. A parent switching personas lands on a filled report, never on an empty state; Üretken's task is `completed`, Riskli's is still `open`.
 
 During the demo, Ece approves `usr_deniz`, then either extension or a “load sample week” debug button (web or expo `__DEV__`) POSTs the balanced minutes.
 

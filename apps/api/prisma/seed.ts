@@ -1,15 +1,25 @@
 import { computeScore } from "@nexora/score";
 import { PrismaClient, type Prisma } from "@prisma/client";
-import { CURRENT_WEEK, DEMO_MINUTES, PREVIOUS_WEEK, utcDate, wirePeriod } from "./demo-data";
+import { fallbackFor } from "../src/coach/fallback";
+import { CURRENT_WEEK, DEMO_MINUTES, HISTORY, utcDate, wirePeriod } from "./demo-data";
 
 /**
  * Demo RESET (docs/building-blocks/08-demo-seed.md). `bun run --filter
  * nexora-api db:seed` puts the database back on slide 1 of the jury script:
- * Deniz waits for a parent, the two switcher personas already have two weeks
- * each. It is a reset, not an accumulator — running it mid-demo undoes the
- * live approve, and running it twice prints byte-identical read-back lines.
+ * Deniz waits for a parent, the two switcher personas already have four weeks
+ * each plus a coach row and a task. It is a reset, not an accumulator — running
+ * it mid-demo undoes the live approve, and running it twice prints
+ * byte-identical read-back lines.
  */
 const prisma = new PrismaClient();
+
+/**
+ * `--approve` starts Deniz already active, for rehearsals and for anyone who
+ * wants a full database in one command (`db:seed -- --approve` then
+ * `demo:ingest-balanced`). The jury path uses the default: he waits, and Ece
+ * approves him live on stage (docs/building-blocks/08-demo-seed.md).
+ */
+const approved = process.argv.includes("--approve");
 
 // Ece first: the three youth rows reference her through parentId.
 const USERS: Prisma.UserUncheckedCreateInput[] = [
@@ -20,7 +30,7 @@ const USERS: Prisma.UserUncheckedCreateInput[] = [
     // Slide 1: the jury watches Ece approve this one live.
     id: "usr_deniz",
     role: "youth",
-    status: "pending_parent_consent",
+    status: approved ? "active" : "pending_parent_consent",
     displayName: "Deniz",
     personaKey: "deniz_balanced",
     parentId: "usr_ece",
@@ -67,12 +77,9 @@ await prisma.$transaction([
 ]);
 
 for (const persona of SEEDED) {
-  // Previous week is the balanced set for everyone, so the trend visibly drops
-  // to 38 for Riskli and rises to 93 for Üretken.
-  const weeks = [
-    { period: PREVIOUS_WEEK, minutes: DEMO_MINUTES.deniz_balanced },
-    { period: CURRENT_WEEK, minutes: persona.minutes },
-  ];
+  // The three shared history weeks climb to 80, so the current week visibly
+  // drops to 38 for Riskli and rises to 93 for Üretken.
+  const weeks = [...HISTORY, { period: CURRENT_WEEK, minutes: persona.minutes }];
 
   for (const week of weeks) {
     const periodStart = utcDate(week.period.start);
@@ -107,6 +114,46 @@ for (const persona of SEEDED) {
   // Status and audit must never disagree: an active youth has an approve row.
   await prisma.consentEvent.create({
     data: { id: `cns_${persona.id}_approve`, youthId: persona.id, actorId: "usr_ece", action: "approve" },
+  });
+
+  // A parent switching to Riskli or Üretken must land on a filled report, not on
+  // the "no task yet" empty state — only Deniz earns his task live on stage. The
+  // copy is the same canned band answer the coach itself serves with HF_TOKEN
+  // unset, so the demo shows one voice. Üretken already finished his; Riskli's
+  // is still open, which is the honest shape of that week.
+  const canned = fallbackFor(computeScore(persona.minutes).value);
+  const done = persona.id === "usr_deniz_productive";
+  const taskId = `tsk_${persona.id}`;
+  await prisma.task.create({
+    data: {
+      id: taskId,
+      youthId: persona.id,
+      title: canned.task.title,
+      steps: canned.task.steps,
+      etaMinutes: canned.task.eta_minutes,
+      status: done ? "completed" : "open",
+      badge: done ? "degerli_adim" : null,
+      // Frozen, like the periods: a re-seed must not move the demo's clock.
+      completedAt: done ? utcDate(CURRENT_WEEK.end) : null,
+    },
+  });
+  await prisma.coachRecommendation.create({
+    data: {
+      id: `cch_${persona.id}`,
+      youthId: persona.id,
+      tips: canned.tips,
+      shareText: canned.share_text,
+      taskId,
+      source: "fallback",
+      createdAt: utcDate(CURRENT_WEEK.end),
+    },
+  });
+}
+
+// Status and audit must never disagree here either.
+if (approved) {
+  await prisma.consentEvent.create({
+    data: { id: "cns_usr_deniz_approve", youthId: "usr_deniz", actorId: "usr_ece", action: "approve" },
   });
 }
 

@@ -270,7 +270,7 @@ Never: diagnosis, “bağımlılık”, “kötü çocuk”, URLs, hostnames.
 ## LLM boundary
 
 - Provider: HuggingFace Inference router (exact model id in env `HF_MODEL_ID`, token `HF_TOKEN`). The code is model-agnostic: it sends OpenAI-style chat completions and judges the answer by the schema, not by the vendor.
-- `HF_BASE_URL` picks the host that dialect is spoken to; empty means the router. It exists so the model the product documents can be measured on a GPU we do not rent: [`colab/trendyol-coach.ipynb`](colab/trendyol-coach.ipynb) serves Trendyol-LLM from a free Colab T4 through vLLM and a quick tunnel. That notebook is a **developer measurement host, not shipped infrastructure** — a Colab session dies within ~12 hours and its URL changes every time, so nothing in the demo may depend on it.
+- `HF_BASE_URL` picks the host that dialect is spoken to; empty means the router. It exists so the model the product documents can be measured on a GPU we do not rent: [`colab/trendyol-coach.ipynb`](colab/trendyol-coach.ipynb) loads Trendyol-LLM 4-bit on a free Colab T4 with transformers, and can serve it through a small OpenAI-shaped shim and a quick tunnel. That notebook is a **developer measurement host, not shipped infrastructure** — a Colab session dies within ~12 hours and its URL changes every time, so nothing in the demo may depend on it.
 - **Trendyol-LLM is not callable today** (verified 2026-09-17): the router lists 143 served models and no inference provider serves any Trendyol id, so `router.huggingface.co` cannot route to it. Keeping it would mean renting a dedicated HF Inference Endpoint. The demo therefore runs `Qwen/Qwen3-8B`, which speaks Turkish and satisfies the coach schema about three times in four; the rest fall back, which is the designed behaviour. Swap `HF_MODEL_ID` back the day a provider serves Trendyol.
 - Temperature low (≤ 0.4). Token budget must cover a **reasoning** pass: Qwen3-class models fill `reasoning_content` first and leave `content` null if the budget runs out, so 500 returned nothing every time and 900 returns valid JSON.
 - HF's free monthly credit is small; once it is depleted the router answers `402` and every coach call falls back. That is a cost signal, not an outage.
@@ -313,4 +313,4 @@ One Bun process + Neon is enough for a jury demo. Horizontal scale and workers a
 | Report on-read, no pg-boss | One happy path; no job infra to fail in a live demo |
 | Domain-level extension, not content scripts scraping feeds | Privacy contract + closed platform APIs |
 | Canned coach fallback | Demo must not die if HF is slow or returns prose |
-| Colab + vLLM to measure Trendyol, not to serve it | No provider routes Trendyol; measuring it needs a GPU we do not rent. A dying session may not be on the demo's path |
+| Colab to measure Trendyol, not to serve it | No provider routes Trendyol; measuring it needs a GPU we do not rent. A dying session may not be on the demo's path |

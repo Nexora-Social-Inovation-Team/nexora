@@ -69,8 +69,23 @@ function fakeChrome(initial = {}) {
     windows: { WINDOW_ID_NONE: -1, onFocusChanged: on("focus") },
     idle: {
       detection: 0,
+      /*
+       * What chrome.idle answers right now. Real Chrome keeps this consistent
+       * with the transitions it dispatches, so the fake does too: emitting
+       * `listeners.idle("idle")` also moves `live`. A test can set `live`
+       * on its own to model the case the event never arrived.
+       */
+      live: "active",
       setDetectionInterval: (n) => void (fake.idle.detection = n),
-      onStateChanged: on("idle"),
+      queryState: async () => fake.idle.live,
+      onStateChanged: {
+        addListener: (fn) => {
+          listeners.idle = (state) => {
+            fake.idle.live = state;
+            return fn(state);
+          };
+        },
+      },
     },
     alarms: { create: (name, opts) => void fake.alarmsCreated.push({ name, ...opts }), onAlarm: on("alarm") },
     runtime: { onInstalled: on("installed"), onStartup: on("startup") },
@@ -570,6 +585,36 @@ describe("background wiring", () => {
     bg.listeners.updated(1, { url: "https://tr.wikipedia.org/wiki/Fizik" });
     await settled();
     expect(bg.dump.activeCategory).toBe("science");
+  });
+
+  it("recovers an idleState the worker never saw change back", async () => {
+    /*
+     * Reported as a broken counter: the popup read "Ekran kilitli. Sayım
+     * duruyor." on an unlocked screen. chrome.idle.onStateChanged is the only
+     * writer of idleState, so a transition the worker slept through — or a
+     * browser restart while locked — leaves "locked" stored forever and
+     * accruing() never opens a checkpoint again.
+     */
+    Object.assign(bg.dump, { idleState: "locked" });
+    bg.idle.live = "active"; // the screen is in fact awake; the event was missed
+    bg.tab = { url: "https://tr.wikipedia.org/wiki/Fizik", active: true };
+
+    bg.listeners.alarm({ name: "nexora-flush" });
+    await settled();
+
+    expect(bg.dump.idleState).toBe("active");
+    expect(bg.dump.activeCategory).toBe("science");
+  });
+
+  it("still trusts a real lock", async () => {
+    bg.idle.live = "locked";
+    bg.tab = { url: "https://tr.wikipedia.org/wiki/Fizik", active: true };
+
+    bg.listeners.alarm({ name: "nexora-flush" });
+    await settled();
+
+    expect(bg.dump.idleState).toBe("locked");
+    expect(bg.dump.activeCategory).toBeNull();
   });
 
   it("delivers on the send alarm only, and lifts a block when settings change", async () => {

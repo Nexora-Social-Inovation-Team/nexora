@@ -4,10 +4,31 @@ import { FLUSH_MINUTES, IDLE_SECONDS, SEND_MINUTES, autoSend, unblockSending, up
 const FLUSH = "nexora-flush";
 const SEND = "nexora-send";
 
+/**
+ * `idleState` has exactly one writer, chrome.idle.onStateChanged, so a
+ * transition the worker never received is permanent: a screen locked while the
+ * service worker slept, a browser restart, or an extension reload during a lock
+ * all leave "locked" in storage. accruing() then never opens a checkpoint
+ * again and the counter is dead until someone clears the extension's data —
+ * reported as "Ekran kilitli. Sayım duruyor." on an unlocked screen.
+ *
+ * Asking chrome.idle what is true right now costs one call. It rides the flush
+ * alarm that already runs every minute, so a missed transition heals inside one
+ * flush window instead of never.
+ */
+const settleWithLiveIdle = async () => {
+  try {
+    await update({ idleState: await chrome.idle.queryState(IDLE_SECONDS) });
+  } catch {
+    await update(); // no idle API: settle anyway rather than skip the flush
+  }
+};
+
 const schedule = () => {
   chrome.alarms.create(FLUSH, { periodInMinutes: FLUSH_MINUTES });
   chrome.alarms.create(SEND, { periodInMinutes: SEND_MINUTES });
   chrome.idle.setDetectionInterval(IDLE_SECONDS);
+  void settleWithLiveIdle(); // a restart is the likeliest way to miss a transition
 };
 
 chrome.runtime.onInstalled.addListener(schedule);
@@ -32,6 +53,6 @@ chrome.storage.onChanged.addListener((_changes, area) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === FLUSH) void update(); // settles elapsed time only, never a flat +1
+  if (alarm.name === FLUSH) void settleWithLiveIdle(); // settles elapsed time only, never a flat +1
   if (alarm.name === SEND) void autoSend();
 });

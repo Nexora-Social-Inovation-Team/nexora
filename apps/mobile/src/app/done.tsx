@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import { AccessibilityInfo, Animated, StyleSheet, Text, View } from "react-native";
 
-import { Btn, Card, PageHeading, Screen, colors, s, useActiveGate } from "@/ui";
+import { Btn, Card, PageHeading, Screen, brand, colors, s, useActiveGate } from "@/ui";
 
 /** The four sparks around the badge, as [x, y] offsets they travel out to. */
 const SPARKS: [number, number][] = [
@@ -114,7 +114,9 @@ const x = StyleSheet.create({
     padding: 28,
   },
   starWrap: { height: 76, alignItems: "center", justifyContent: "center" },
-  badgeSymbol: { color: colors.link, fontSize: 64, lineHeight: 72 },
-  spark: { position: "absolute", color: colors.link, fontSize: 18, lineHeight: 20 },
+  badgeSymbol: { color: brand.blue, fontSize: 64, lineHeight: 72 },
+  // Violet, not the logo cyan: cyan on the tinted badge measures 1.1:1 and
+  // would flash invisibly. Decorative either way, but visible decoration.
+  spark: { position: "absolute", color: brand.violet, fontSize: 18, lineHeight: 20 },
   badgeText: { color: colors.text, fontSize: 28, fontWeight: "600", letterSpacing: -0.8 },
 });

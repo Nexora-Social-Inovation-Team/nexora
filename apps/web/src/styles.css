@@ -22,6 +22,19 @@
   --color-link: #0b5fd0; /* 5.8:1 on --surface */
   --color-warn: #8a5a00; /* 5.9:1 on --surface */
   --color-danger: #b3261e; /* 6.5:1 on --surface */
+
+  /*
+   * Brand ramp, sampled off brand/nexora-logo.jpg. Decorative only: against
+   * --bg the cyan measures 1.2:1, magenta 2.9:1 and the logo blue 4.2:1, so
+   * none of them may carry body text. Gradients, rings and rules only; --link
+   * stays the blue that passes AA.
+   */
+  --color-brand-cyan: #0dfcff;
+  --color-brand-blue: #0171fd;
+  --color-brand-violet: #975ef9;
+  --color-brand-magenta: #fb2cfe;
+  --color-brand-orange: #ff8e5b;
+  --color-brand-ground: #030214; /* the badge interior the icons sit on */
   --font-display: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-ui: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -37,6 +50,14 @@
   --muted: var(--color-muted);
   --accent: var(--color-accent);
   --link: var(--color-link);
+  --brand-ramp: linear-gradient(
+    90deg,
+    var(--color-brand-cyan),
+    var(--color-brand-blue),
+    var(--color-brand-violet),
+    var(--color-brand-magenta),
+    var(--color-brand-orange)
+  );
   --warn: var(--color-warn);
   --danger: var(--color-danger);
   color-scheme: light;

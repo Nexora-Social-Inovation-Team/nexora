@@ -195,6 +195,47 @@ This replaces the earlier dark chartreuse starter palette.
 | `--font-display` | Geist 600, `-0.033em`, `line-height: 1.1` | Headings and wordmark |
 | `--font-ui` | Geist 400 | Body |
 
+### Brand ramp (decorative only)
+
+Sampled off `brand/nexora-logo.jpg`, the logo artwork. The mark is neon on
+near-black; the product is not, and the light palette above does not move. These
+five carry **no text anywhere** — the measured ratios against `--bg` are why.
+
+| Token | Value | On `--bg` | Use |
+|---|---|---|---|
+| `--brand-cyan` | `#0DFCFF` | 1.2:1 | Gradient stop only |
+| `--brand-blue` | `#0171FD` | 4.2:1 | Large non-text: badge star, ring segment |
+| `--brand-violet` | `#975EF9` | 3.8:1 | Large non-text: ring segment, sparks |
+| `--brand-magenta` | `#FB2CFE` | 2.9:1 | Gradient stop only |
+| `--brand-orange` | `#FF8E5B` | 2.2:1 | Gradient stop only |
+| `--brand-ground` | `#030214` | — | The badge interior; icon and splash background |
+
+`--brand-ramp` composes the five left to right. It appears in exactly three
+places: a 3px hairline under the web header, the Expo score ring, and the badge
+on screen 5. The score ring has no gradient border — React Native has no such
+thing and `expo-linear-gradient` would be a dependency for one circle — so it
+takes four of the stops as its four border sides, which reads as the sweep at
+160px.
+
+`--link` stays `#0B5FD0` at 5.7:1. The logo blue is 4.2:1 and would have failed
+AA for body text, so the brand did not get to reassign it.
+
+### Logo
+
+`brand/nexora-logo.jpg` is the source of truth. Every icon is generated:
+
+```
+python scripts/build-brand-assets.py
+```
+
+It writes the web favicon and apple-touch icon, the Expo icon, adaptive icon,
+splash and web favicon, and the four extension icons. Below about 128px the
+wordmark and tagline in the badge turn to mush, so anything small is cropped to
+the N mark — the script finds that crop from the artwork rather than hard-coding
+it, and pads it onto a square of `--brand-ground` so the wordmark below cannot
+creep into frame. Do not hand-edit the generated files; replace the source and
+re-run.
+
 Weights: 600 for headings — a1 measured 500 off the footer section, but the hero
 and section headings on the reference pages are visibly heavier; the footer
 statement is the one place that stays at 500. Body copy is 14–16px on a narrow

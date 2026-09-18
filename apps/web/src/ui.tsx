@@ -57,13 +57,9 @@ const wordmark = "font-display text-xl font-semibold tracking-tight";
 /** The reference keeps content on a 1352px measure inside full-bleed sections. */
 export const container = "mx-auto w-full max-w-[84rem] px-4 sm:px-6";
 
+/** The real mark, generated from brand/nexora-logo.jpg by scripts/build-brand-assets.py. */
 function Mark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5 shrink-0">
-      <circle cx="10" cy="10" r="9" fill="currentColor" />
-      <circle cx="10" cy="10" r="4.5" fill="none" stroke="var(--bg)" strokeWidth="2.5" />
-    </svg>
-  );
+  return <img src="/favicon.png" alt="" aria-hidden="true" className="size-6 shrink-0 rounded-md" />;
 }
 
 /** Navy strip above the nav. The reference leads with one; ours carries the KVKK line. */
@@ -85,6 +81,9 @@ function Header() {
   const { t } = useTranslation();
   return (
     <header className="border-b border-line">
+      {/* The logo ramp as a hairline: the one place the brand gradient appears
+          on a light page, and it carries no text. */}
+      <div aria-hidden="true" className="h-[3px]" style={{ background: "var(--brand-ramp)" }} />
       <nav aria-label="Ana menü" className={`${container} flex flex-wrap items-center gap-6 py-4`}>
         <Link to="/" className={`${wordmark} flex items-center gap-2`}>
           <Mark />

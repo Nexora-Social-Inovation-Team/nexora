@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { CategoryMinutes, Score, WeeklyReport } from "@nexora/shared";
 
 import { failureCode, getScore, getWeeklyReport } from "@/api";
-import { Btn, CATEGORIES, Card, PageHeading, Screen, StateView, TaskDone, colors, s, useActiveGate } from "@/ui";
+import { Btn, CATEGORIES, Card, PageHeading, Screen, StateView, TaskDone, brand, colors, s, useActiveGate } from "@/ui";
 
 type View3 = "loading" | "ready" | "empty" | "error";
 
@@ -128,13 +128,22 @@ export default function ScoreScreen() {
 const x = StyleSheet.create({
   scorePanel: { backgroundColor: colors.tint, borderRadius: 24, padding: 24, alignItems: "center", gap: 20 },
   center: { textAlign: "center" },
+  /*
+   * The brand ramp around the ring. React Native has no gradient border and
+   * expo-linear-gradient would be a dependency for one circle, but a border
+   * takes a colour per side: four stops of the logo ramp read as the sweep at
+   * this size. Decorative — the value inside carries the meaning.
+   */
   ring: {
     alignSelf: "center",
     width: 160,
     height: 160,
     borderRadius: 80,
     borderWidth: 8,
-    borderColor: colors.accent,
+    borderTopColor: brand.cyan,
+    borderRightColor: brand.blue,
+    borderBottomColor: brand.violet,
+    borderLeftColor: brand.magenta,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",

@@ -16,6 +16,9 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      // Generated from brand/nexora-logo.jpg — see scripts/build-brand-assets.py.
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/logo.png" },
       // Geist is the measured face; the token stack falls back to system-ui offline.
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap" },

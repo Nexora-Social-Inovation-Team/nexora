@@ -1,22 +1,91 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { AccessibilityInfo, Animated, StyleSheet, Text, View } from "react-native";
 
 import { Btn, Card, PageHeading, Screen, colors, s, useActiveGate } from "@/ui";
+
+/** The four sparks around the badge, as [x, y] offsets they travel out to. */
+const SPARKS: [number, number][] = [
+  [-74, -34],
+  [70, -42],
+  [-58, 40],
+  [64, 34],
+];
 
 /** Screen 5 — badge + the summary the parent will see. */
 export default function Done() {
   useActiveGate();
   const { share } = useLocalSearchParams<{ share?: string }>();
 
+  // One entrance, then the star. Animated is in react-native already; reanimated
+  // or lottie would be a dependency for four seconds of motion.
+  const intro = useRef(new Animated.Value(0)).current;
+  const spark = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let cancelled = false;
+    const settle = () => {
+      intro.setValue(1);
+      spark.setValue(1);
+    };
+    // Honour the OS setting: motion is a reward here, never the message. The
+    // catch matters more than the setting — both values start at 0, which is
+    // opacity 0, so a rejected query would leave the badge screen blank.
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((reduced) => {
+        if (cancelled) return;
+        if (reduced) return settle();
+        Animated.sequence([
+          Animated.timing(intro, { toValue: 1, duration: 320, useNativeDriver: true }),
+          Animated.spring(spark, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
+        ]).start();
+      })
+      .catch(settle);
+    return () => {
+      cancelled = true;
+    };
+  }, [intro, spark]);
+
+  const rise = intro.interpolate({ inputRange: [0, 1], outputRange: [18, 0] });
+  const starScale = spark.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  // Sparks flash on the way out and are gone once the star settles.
+  const sparkFade = spark.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 1, 0] });
+
   return (
     <Screen>
       <PageHeading title="Görev tamamlandı" body="Küçük bir adım attın. Bu hafta dengeni kendin seçtin." />
-      <View style={x.badge} accessible accessibilityLabel="Rozet kazandın: Değerli adım">
-        <Text style={x.badgeSymbol} accessibilityElementsHidden importantForAccessibility="no">✦</Text>
+      <Animated.View
+        style={[x.badge, { opacity: intro, transform: [{ translateY: rise }] }]}
+        accessible
+        accessibilityLabel="Rozet kazandın: Değerli adım"
+      >
+        <View style={x.starWrap} accessibilityElementsHidden importantForAccessibility="no">
+          {SPARKS.map(([dx, dy]) => (
+            <Animated.Text
+              key={`${dx},${dy}`}
+              style={[
+                x.spark,
+                {
+                  opacity: sparkFade,
+                  transform: [
+                    { translateX: spark.interpolate({ inputRange: [0, 1], outputRange: [0, dx] }) },
+                    { translateY: spark.interpolate({ inputRange: [0, 1], outputRange: [0, dy] }) },
+                    { scale: sparkFade },
+                  ],
+                },
+              ]}
+            >
+              ✦
+            </Animated.Text>
+          ))}
+          <Animated.Text style={[x.badgeSymbol, { opacity: spark, transform: [{ scale: starScale }] }]}>
+            ✦
+          </Animated.Text>
+        </View>
         <Text style={s.eyebrow}>YENİ ROZETİN</Text>
         <Text style={x.badgeText}>Değerli adım</Text>
         <Text style={s.muted}>Fark ettin. Seçtin. Harekete geçtin.</Text>
-      </View>
+      </Animated.View>
       {share ? (
         <>
           <Text style={s.muted}>Velinle paylaşılacak özet</Text>
@@ -44,6 +113,8 @@ const x = StyleSheet.create({
     backgroundColor: colors.tint,
     padding: 28,
   },
-  badgeSymbol: { color: colors.link, fontSize: 64 },
+  starWrap: { height: 76, alignItems: "center", justifyContent: "center" },
+  badgeSymbol: { color: colors.link, fontSize: 64, lineHeight: 72 },
+  spark: { position: "absolute", color: colors.link, fontSize: 18, lineHeight: 20 },
   badgeText: { color: colors.text, fontSize: 28, fontWeight: "600", letterSpacing: -0.8 },
 });

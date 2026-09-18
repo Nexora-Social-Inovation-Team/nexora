@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
-import type { CategoryMinutes, Score } from "@nexora/shared";
+import type { CategoryMinutes, Score, WeeklyReport } from "@nexora/shared";
 
 import { failureCode, getScore, getWeeklyReport } from "@/api";
 import { Btn, CATEGORIES, Card, PageHeading, Screen, StateView, colors, s, useActiveGate } from "@/ui";
@@ -16,6 +16,7 @@ export default function ScoreScreen() {
   const [problem, setProblem] = useState<string>();
   const [score, setScore] = useState<Score | null>(null);
   const [minutes, setMinutes] = useState<CategoryMinutes>({});
+  const [task, setTask] = useState<WeeklyReport["task"]>(null);
 
   const load = useCallback(async () => {
     setView("loading");
@@ -28,6 +29,7 @@ export default function ScoreScreen() {
       ]);
       setScore(current);
       setMinutes(report && !report.empty ? report.distribution : {});
+      setTask(report && !report.empty ? report.task : null);
       setView("ready");
     } catch (error) {
       const code = failureCode(error);
@@ -115,6 +117,22 @@ export default function ScoreScreen() {
               <Text style={s.muted}>{unused} kategoride bu hafta süre yok.</Text>
             ) : null}
           </Card>
+          {task?.status === "completed" ? (
+            <Card tinted>
+              <Text style={s.subtitle} accessibilityLabel="Bu haftaki görevini tamamladın">
+                ✦ Bu haftaki görevini tamamladın
+              </Text>
+              <Text style={s.muted}>{task.title}</Text>
+              {/* Demo only: there is no un-complete endpoint (docs/API.md is the
+                  whole surface), so the reset is the seed script. */}
+              {__DEV__ ? (
+                <Text style={x.demoNote}>
+                  Demo: baştan almak için terminalde{" "}
+                  <Text style={x.demoCode}>bun run --filter nexora-api db:seed</Text>
+                </Text>
+              ) : null}
+            </Card>
+          ) : null}
           <Btn label="Koç önerilerini gör" onPress={() => router.push("/coach")} />
         </>
       )}
@@ -138,6 +156,8 @@ const x = StyleSheet.create({
   },
   value: { color: colors.text, fontSize: 52, fontWeight: "600", letterSpacing: -1.5 },
   support: { color: colors.warn, fontSize: 16, lineHeight: 24 },
+  demoNote: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  demoCode: { color: colors.text, fontFamily: Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }) },
   row: { gap: 6, paddingVertical: 4 },
   rowLabel: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
   label: { flex: 1, fontSize: 14 },

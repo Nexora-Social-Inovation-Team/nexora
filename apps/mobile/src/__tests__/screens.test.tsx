@@ -159,6 +159,43 @@ describe("screen 3 — bu haftaki dengen", () => {
     expect(screen.getByText("2 kategoride bu hafta süre yok.")).toBeTruthy();
   });
 
+  it("says the task is done on the main screen once it is completed", async () => {
+    fetchMock.mockImplementation((url: string) =>
+      String(url).includes("/score/current")
+        ? res(200, {
+            youthId: "usr_deniz",
+            value: 80,
+            reasons: REASONS,
+            computedAt: "2026-09-15T10:05:00.000Z",
+            period: "2026-09-08/2026-09-15",
+          })
+        : res(200, {
+            youthId: "usr_deniz",
+            period: "2026-09-08/2026-09-15",
+            score: { value: 80, reasons: REASONS },
+            distribution: DISTRIBUTION,
+            trend: [],
+            task: { id: "task_abc", title: "15 dakikalık bilim molası", status: "completed" },
+            share_text: null,
+            empty: false,
+          }),
+    );
+
+    await render(<ScoreScreen />);
+
+    expect(await screen.findByText("✦ Bu haftaki görevini tamamladın")).toBeTruthy();
+    expect(screen.getByText("15 dakikalık bilim molası")).toBeTruthy();
+  });
+
+  it("stays quiet while the task is still open", async () => {
+    ready();
+
+    await render(<ScoreScreen />);
+
+    await screen.findAllByTestId("reason");
+    expect(screen.queryByText("✦ Bu haftaki görevini tamamladın")).toBeNull();
+  });
+
   it("renders the empty state on no_data", async () => {
     fetchMock.mockImplementation(() => fail(404, "no_data", "Henüz kategori özeti yok."));
 

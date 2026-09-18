@@ -106,6 +106,10 @@ export function PageHeading({ title, body }: { title: string; body?: string }) {
  * Shown on both the score and the coach screen once the week's task is done.
  * The API is idempotent about a second completion, but offering the button
  * again reads as if the first press did not land.
+ *
+ * No reset control here on purpose: docs/API.md has no un-complete endpoint,
+ * and a terminal command has no business on a teenager's phone. Re-running the
+ * demo is a runbook step (docs/DEMO.md), not a product feature.
  */
 export function TaskDone({ title }: { title: string }) {
   return (
@@ -114,14 +118,6 @@ export function TaskDone({ title }: { title: string }) {
         ✦ Bu haftaki görevini tamamladın
       </Text>
       <Text style={s.muted}>{title}</Text>
-      {/* Demo only: docs/API.md has no un-complete endpoint and AGENTS.md
-          forbids inventing one, so the seed script is the undo. */}
-      {__DEV__ ? (
-        <Text style={s.demoNote}>
-          Demo: baştan almak için terminalde{" "}
-          <Text style={s.demoCode}>bun run --filter nexora-api db:seed</Text>
-        </Text>
-      ) : null}
     </Card>
   );
 }
@@ -312,8 +308,6 @@ export const s = StyleSheet.create({
   btnTextPrimary: { color: colors.bg, fontSize: 16, fontWeight: "600" },
   btnTextGhost: { color: colors.text, fontSize: 16, fontWeight: "600" },
   pressed: { opacity: 0.7 },
-  demoNote: { color: colors.muted, fontSize: 12, lineHeight: 18 },
-  demoCode: { color: colors.text, fontFamily: Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }) },
   skeletonWrap: { gap: 12 },
   skeleton: { backgroundColor: colors.band, borderRadius: 20 },
 });

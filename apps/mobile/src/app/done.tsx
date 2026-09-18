@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
-import { Btn, Card, Illustration, PageHeading, Screen, colors, s, useActiveGate } from "@/ui";
+import { Btn, Card, PageHeading, Screen, colors, s, useActiveGate } from "@/ui";
 
 /** Screen 5 — badge + the summary the parent will see. */
 export default function Done() {
@@ -9,9 +9,8 @@ export default function Done() {
   const { share } = useLocalSearchParams<{ share?: string }>();
 
   return (
-    <Screen step={3}>
-      <PageHeading eyebrow="BU ADIM SANA AİT" title="Görev tamamlandı" body="Küçük bir adım attın. Bu hafta dengeni kendin seçtin." />
-      <Illustration kind="done" />
+    <Screen>
+      <PageHeading title="Görev tamamlandı" body="Küçük bir adım attın. Bu hafta dengeni kendin seçtin." />
       <View style={x.badge} accessible accessibilityLabel="Rozet kazandın: Değerli adım">
         <Text style={x.badgeSymbol} accessibilityElementsHidden importantForAccessibility="no">✦</Text>
         <Text style={s.eyebrow}>YENİ ROZETİN</Text>

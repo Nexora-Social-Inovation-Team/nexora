@@ -93,65 +93,11 @@ export function Card({ children, tinted = false }: { children: ReactNode; tinted
   return <View style={[s.card, tinted && s.tinted]}>{children}</View>;
 }
 
-export function PageHeading({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
+export function PageHeading({ title, body }: { title: string; body?: string }) {
   return (
     <View style={s.headingBand}>
-      <Text style={s.eyebrow}>{eyebrow}</Text>
       <Text accessibilityRole="header" style={s.title}>{title}</Text>
       {body ? <Text style={s.muted}>{body}</Text> : null}
-    </View>
-  );
-}
-
-type IllustrationKind = "welcome" | "waiting" | "balance" | "coach" | "done";
-
-/**
- * Lightweight, asset-free artwork shared by the five mobile screens. The
- * geometric card, orbit and spark shapes keep the visual language consistent
- * with the web and extension while remaining crisp on every device density.
- */
-export function Illustration({ kind }: { kind: IllustrationKind }) {
-  const copy = {
-    welcome: { value: "4", label: "adım" },
-    waiting: { value: "01", label: "onay" },
-    // Keep the artwork abstract so it does not look like a second score value.
-    balance: { value: "↗", label: "denge" },
-    coach: { value: "3", label: "öneri" },
-    done: { value: "✦", label: "rozet" },
-  }[kind];
-  return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={`${copy.value} ${copy.label}`}
-      style={[s.illustration, s[`illustration_${kind}` as keyof typeof s] as object]}
-    >
-      <View style={s.illustrationGlow} />
-      <View style={s.illustrationOrbit} />
-      <View style={s.illustrationSparkOne} />
-      <View style={s.illustrationSparkTwo} />
-      <View style={s.illustrationCard}>
-        <View style={s.illustrationCardTop}>
-          <View style={s.illustrationDot} />
-          <View style={[s.illustrationDot, { opacity: 0.5 }]} />
-          <View style={[s.illustrationDot, { opacity: 0.25 }]} />
-        </View>
-        <Text style={s.illustrationValue}>{copy.value}</Text>
-        <Text style={s.illustrationLabel}>{copy.label}</Text>
-      </View>
-    </View>
-  );
-}
-
-export function Journey({ current }: { current: number }) {
-  return (
-    <View style={s.journey} accessibilityLabel={`Adım ${current + 1}: ${["Ölç", "Anla", "Koçla", "Üret"][current]}`}>
-      {["Ölç", "Anla", "Koçla", "Üret"].map((label, index) => (
-        <View key={label} style={s.journeyItem}>
-          <View style={[s.journeyLine, index <= current && s.journeyActive]} />
-          <Text style={[s.journeyLabel, index === current && s.journeySelected]}>{label}</Text>
-        </View>
-      ))}
     </View>
   );
 }
@@ -267,19 +213,14 @@ function PersonaSwitch() {
   );
 }
 
-export function Screen({ children, hero, step }: { children: ReactNode; hero?: boolean; step?: number }) {
+export function Screen({ children }: { children: ReactNode }) {
   return (
     <SafeAreaView style={s.screen}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={s.content}>
         <View style={s.trustStrip}><Text style={s.trustText}>{KVKK_LINE}</Text></View>
         <PersonaSwitch />
-        {!hero && step !== undefined ? <Journey current={step} /> : null}
         {children}
-        <View style={s.footer}>
-          <Text style={s.eyebrow}>KÜÇÜK ADIMLAR, SANA AİT BİR DENGE.</Text>
-          <Text style={s.muted}>Yasaklamadan, yargılamadan.</Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -306,28 +247,6 @@ export const s = StyleSheet.create({
   eyebrow: { color: colors.muted, fontSize: 11, lineHeight: 18, fontWeight: "600", letterSpacing: 1.4 },
   subtitle: { color: colors.text, fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.5 },
   tinted: { backgroundColor: colors.tint, borderColor: colors.tint },
-  journey: { flexDirection: "row", gap: 8 },
-  journeyItem: { flex: 1, gap: 8 },
-  journeyLine: { height: 3, backgroundColor: colors.line, borderRadius: 2 },
-  journeyActive: { backgroundColor: colors.link },
-  journeyLabel: { color: colors.muted, fontSize: 12 },
-  journeySelected: { color: colors.text, fontWeight: "700" },
-  footer: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 20, marginTop: 12, gap: 4 },
-  illustration: { height: 156, borderRadius: 24, overflow: "hidden", backgroundColor: colors.tint, position: "relative", alignItems: "center", justifyContent: "center" },
-  illustration_welcome: { backgroundColor: "#E7EEFB" },
-  illustration_waiting: { backgroundColor: "#F1EFE9" },
-  illustration_balance: { backgroundColor: "#DCE8FA" },
-  illustration_coach: { backgroundColor: "#E7EEFB" },
-  illustration_done: { backgroundColor: "#DCE8FA" },
-  illustrationGlow: { position: "absolute", width: 190, height: 190, borderRadius: 95, backgroundColor: "rgba(255,255,255,0.42)", top: -75, right: -25 },
-  illustrationOrbit: { position: "absolute", width: 190, height: 74, borderRadius: 100, borderWidth: 1, borderColor: "rgba(11,95,208,0.28)", transform: [{ rotate: "-14deg" }] },
-  illustrationSparkOne: { position: "absolute", width: 10, height: 10, borderRadius: 5, backgroundColor: colors.link, top: 30, left: "23%" },
-  illustrationSparkTwo: { position: "absolute", width: 6, height: 6, borderRadius: 3, backgroundColor: colors.text, bottom: 28, right: "20%" },
-  illustrationCard: { width: 112, height: 92, borderRadius: 16, padding: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: "rgba(7,26,49,0.08)", transform: [{ rotate: "-4deg" }], alignItems: "flex-start", justifyContent: "center" },
-  illustrationCardTop: { position: "absolute", top: 12, right: 12, flexDirection: "row", gap: 4 },
-  illustrationDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.link },
-  illustrationValue: { color: colors.text, fontSize: 34, lineHeight: 38, fontWeight: "600", letterSpacing: -1 },
-  illustrationLabel: { color: colors.muted, fontSize: 12, lineHeight: 16 },
   numberedRow: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
   number: { color: colors.link, fontSize: 13, fontWeight: "600", lineHeight: 24, width: 24 },
   flexible: { flex: 1 },

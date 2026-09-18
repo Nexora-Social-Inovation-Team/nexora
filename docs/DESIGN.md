@@ -226,21 +226,27 @@ Youth score ring uses `--accent` at any value. Reasons, not colour, encode
 "needs attention". Public marketing and the app share one palette; do not
 introduce a second brand.
 
-Mobile adapts this composition with a persistent privacy strip, compact wordmark,
-cream heading panels, and an Ölç / Anla / Koçla / Üret progress indicator. The
-score sits on a blue panel; explanations use numbered rows and category labels
-sit above their bars so long Turkish labels fit narrow screens. Coach tasks and
-the earned badge share the blue treatment. Every screen also carries an
-asset-free illustration: a small white metric card on a blue orbit with one
-screen-specific cue (steps, consent, balance, tips, or badge). The illustration
-is decorative but has a concise accessible label. Native fonts remain platform
-defaults.
+Mobile adapts this composition with a persistent privacy strip, compact wordmark
+and cream heading panels. The score sits on a blue panel; explanations use
+numbered rows and category labels sit above their bars so long Turkish labels fit
+narrow screens. Coach tasks and the earned badge share the blue treatment. Native
+fonts remain platform defaults.
+
+The youth screens carry **no decorative layer**: no per-screen illustration, no
+Ölç / Anla / Koçla / Üret progress rail, no repeated slogan footer. A phone
+screen held roughly fourteen blocks of which four carried information, and the
+chrome was read as clutter. What is left is the heading, the data, and one
+action. The score screen lists only the categories the week actually used,
+busiest first, and counts the rest in one line — eight rows of which several read
+`0 dk` is noise, not a distribution. The privacy strip, the support-language
+line, the empty and error states and every accessibility label stay exactly as
+they were; only decoration was removed.
 
 The extension popup and options page share `apps/extension/ui.css`: cream summary
 panel, white category card, navy controls, and blue privacy note. The popup shows
 the live category-minute total and an explicit paused/counting label. Both panels
-repeat the same orbit/card illustration so the mobile and extension experiences
-read as one product. Settings remain a single keyboard-submittable form, linked
+keep the orbit/card illustration; mobile dropped its copy (above), so the shared
+language is now the palette and the panel treatment rather than the artwork. Settings remain a single keyboard-submittable form, linked
 directly from the popup.
 
 ## Demo seeds (minutes → distinct scores)

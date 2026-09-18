@@ -86,7 +86,6 @@ describe("screen 2 — veli onayı bekleniyor", () => {
     await render(<Waiting />);
 
     expect(screen.getByText("Veli onayı bekleniyor")).toBeTruthy();
-    expect(screen.getByLabelText("01 onay")).toBeTruthy();
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(urlsCalled().some((url) => url.includes("/users/me"))).toBe(true);
     expect(urlsCalled().some((url) => url.includes("/score"))).toBe(false);
@@ -133,10 +132,31 @@ describe("screen 3 — bu haftaki dengen", () => {
 
     expect(await screen.findAllByTestId("reason")).toHaveLength(3);
     expect(screen.getByText("80")).toBeTruthy();
-    expect(await screen.findByLabelText("↗ denge")).toBeTruthy();
     expect(screen.getByText("Eğlence")).toBeTruthy();
     expect(screen.getByText("120 dk")).toBeTruthy();
     expect(screen.getByText("Ham bağlantı, mesaj veya arama kaydı toplanmaz.")).toBeTruthy();
+  });
+
+  it("lists only the categories the week used, busiest first", async () => {
+    ready();
+
+    await render(<ScoreScreen />);
+
+    // DISTRIBUTION leaves entrepreneurship and harmful at 0: eight rows of which
+    // two read "0 dk" is noise, so they collapse into one counted line.
+    const rows = (await screen.findAllByLabelText(/ dakika$/)).map(
+      (node) => node.props.accessibilityLabel as string,
+    );
+    expect(rows).toEqual([
+      "Eğlence: 120 dakika",
+      "Bilim: 40 dakika",
+      "Spor: 20 dakika",
+      "Sanat: 15 dakika",
+      "Kültür: 10 dakika",
+      "Millî hafıza: 5 dakika",
+    ]);
+    expect(screen.queryByText("Girişimcilik")).toBeNull();
+    expect(screen.getByText("2 kategoride bu hafta süre yok.")).toBeTruthy();
   });
 
   it("renders the empty state on no_data", async () => {
@@ -218,7 +238,6 @@ describe("screen 4 — koç ve mikro-görev", () => {
     await render(<Coach />);
 
     expect(await screen.findAllByTestId("tip")).toHaveLength(3);
-    expect(await screen.findByLabelText("3 öneri")).toBeTruthy();
     expect(screen.getByText("Tahmini süre: 15 dk")).toBeTruthy();
   });
 });
@@ -228,7 +247,6 @@ describe("screen 5 — görev tamamlandı", () => {
     await render(<Done />);
 
     expect(screen.getByLabelText("Rozet kazandın: Değerli adım")).toBeTruthy();
-    expect(screen.getByLabelText("✦ rozet")).toBeTruthy();
     expect(screen.getByText("Velinle paylaşılacak özet")).toBeTruthy();
     expect(screen.getByText("Deniz bu hafta kısa bir bilim görevi seçti.")).toBeTruthy();
     expect(screen.getByLabelText("Panele yansısın")).toBeTruthy();
@@ -242,7 +260,6 @@ describe("demo persona switch", () => {
     await render(<Onboarding />);
     await openMenu();
 
-    expect(screen.getByLabelText("4 adım")).toBeTruthy();
     expect(screen.getByText("Dengeli")).toBeTruthy();
     expect(screen.getByText("Riskli")).toBeTruthy();
     expect(screen.getByText("Üretken")).toBeTruthy();

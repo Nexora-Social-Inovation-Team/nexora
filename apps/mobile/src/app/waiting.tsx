@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppState, Text } from "react-native";
 
 import { refreshMe, useSession } from "@/api";
-import { Btn, Card, Illustration, PageHeading, Screen, s } from "@/ui";
+import { Btn, Card, PageHeading, Screen, s } from "@/ui";
 
 /** Screen 2 — shown while `status === "pending_parent_consent"`. No score is fetched here. */
 export default function Waiting() {
@@ -35,8 +35,7 @@ export default function Waiting() {
 
   return (
     <Screen>
-      <PageHeading eyebrow="BAŞLAMADAN ÖNCE" title="Veli onayı bekleniyor" body="Hesabın, bir veli onaylayana kadar açılmaz. Veli yalnızca kategori özetlerini görür; tam bağlantı yok." />
-      <Illustration kind="waiting" />
+      <PageHeading title="Veli onayı bekleniyor" body="Hesabın, bir veli onaylayana kadar açılmaz. Veli yalnızca kategori özetlerini görür; tam bağlantı yok." />
       <Card tinted>
         <Text style={s.subtitle}>Güvenle, birlikte başlayalım.</Text>
         <Text style={s.body}>Onay gelene kadar skor ve koç önerileri açılmaz. Ziyaret geçmişin velinle paylaşılmaz.</Text>

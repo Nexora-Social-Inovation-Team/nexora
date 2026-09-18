@@ -5,7 +5,7 @@ import { Text, View } from "react-native";
 import type { CoachResponse } from "@nexora/shared";
 
 import { completeTask, failureCode, getCoach } from "@/api";
-import { Btn, Card, Illustration, PageHeading, Screen, StateView, s, useActiveGate } from "@/ui";
+import { Btn, Card, PageHeading, Screen, StateView, s, useActiveGate } from "@/ui";
 
 /** Screen 4 — three tips plus one micro-task. */
 export default function Coach() {
@@ -49,9 +49,8 @@ export default function Coach() {
   }
 
   return (
-    <Screen step={2}>
-      <PageHeading eyebrow="SANA UYGUN KÜÇÜK ADIMLAR" title="Koç önerileri" body="Her şeyi değiştirmene gerek yok. Bugün bir adım yeter." />
-      <Illustration kind="coach" />
+    <Screen>
+      <PageHeading title="Koç önerileri" body="Her şeyi değiştirmene gerek yok. Bugün bir adım yeter." />
       {view !== "ready" || !coach ? (
         <StateView
           state={view === "ready" ? "loading" : view}

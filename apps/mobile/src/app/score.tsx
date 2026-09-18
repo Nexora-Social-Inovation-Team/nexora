@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { CategoryMinutes, Score } from "@nexora/shared";
 
 import { failureCode, getScore, getWeeklyReport } from "@/api";
-import { Btn, CATEGORIES, Card, Illustration, PageHeading, Screen, StateView, colors, s, useActiveGate } from "@/ui";
+import { Btn, CATEGORIES, Card, PageHeading, Screen, StateView, colors, s, useActiveGate } from "@/ui";
 
 type View3 = "loading" | "ready" | "empty" | "error";
 
@@ -48,15 +48,21 @@ export default function ScoreScreen() {
     if (active) void load();
   }, [active, load]);
 
-  const peak = Math.max(1, ...CATEGORIES.map(({ id }) => minutes[id] ?? 0));
-  const total = CATEGORIES.reduce((sum, { id }) => sum + (minutes[id] ?? 0), 0);
+  // Only the categories the week actually used, biggest first. Eight rows of
+  // which five read "0 dk" is noise, not information; the count below the list
+  // keeps the fact that the other categories exist.
+  const used = CATEGORIES.map(({ id, label }) => ({ id, label, value: minutes[id] ?? 0 }))
+    .filter(({ value }) => value > 0)
+    .sort((a, b) => b.value - a.value);
+  const unused = CATEGORIES.length - used.length;
+  const peak = Math.max(1, ...used.map(({ value }) => value));
+  const total = used.reduce((sum, { value }) => sum + value, 0);
   // docs/PRIVACY.md "Safety language": support suggestion, never a verdict or diagnosis.
   const needsSupport = total > 0 && (minutes.harmful ?? 0) / total >= 0.15;
 
   return (
-    <Screen step={1}>
-      <PageHeading eyebrow="KENDİNE BİR BAK" title="Bu haftaki dengen" body="Bir not değil; zamanını anlamanın bir yolu." />
-      <Illustration kind="balance" />
+    <Screen>
+      <PageHeading title="Bu haftaki dengen" />
       {view !== "ready" || !score ? (
         <StateView
           state={view === "ready" ? "loading" : view}
@@ -93,27 +99,21 @@ export default function ScoreScreen() {
             </Text>
           ) : null}
           <Card>
-            <Text style={s.eyebrow}>ZAMANININ DAĞILIMI</Text>
-            <Text style={s.subtitle}>Kategori dağılımı (dakika)</Text>
-            {CATEGORIES.map(({ id, label }) => {
-              const value = minutes[id] ?? 0;
-              return (
-                <View
-                  key={id}
-                  style={x.row}
-                  accessible
-                  accessibilityLabel={`${label}: ${value} dakika`}
-                >
-                  <View style={x.rowLabel}>
-                    <Text style={[s.body, x.label]}>{label}</Text>
-                    <Text style={s.muted}>{value} dk</Text>
-                  </View>
-                  <View style={x.track}>
-                    <View style={[x.bar, { width: `${Math.round((value / peak) * 100)}%` }]} />
-                  </View>
+            <Text style={s.subtitle}>Zamanın nereye gitti?</Text>
+            {used.map(({ id, label, value }) => (
+              <View key={id} style={x.row} accessible accessibilityLabel={`${label}: ${value} dakika`}>
+                <View style={x.rowLabel}>
+                  <Text style={[s.body, x.label]}>{label}</Text>
+                  <Text style={s.muted}>{value} dk</Text>
                 </View>
-              );
-            })}
+                <View style={x.track}>
+                  <View style={[x.bar, { width: `${Math.round((value / peak) * 100)}%` }]} />
+                </View>
+              </View>
+            ))}
+            {unused > 0 ? (
+              <Text style={s.muted}>{unused} kategoride bu hafta süre yok.</Text>
+            ) : null}
           </Card>
           <Btn label="Koç önerilerini gör" onPress={() => router.push("/coach")} />
         </>

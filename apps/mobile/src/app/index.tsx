@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 
 import { login } from "@/api";
-import { Btn, Card, Illustration, Journey, PageHeading, Screen, routeFor, s } from "@/ui";
+import { Btn, Card, PageHeading, Screen, routeFor, s } from "@/ui";
 
 /** Screen 1 — onboarding. Copy: docs/DESIGN.md "1. Onboarding / katılım". */
 export default function Onboarding() {
@@ -20,13 +20,11 @@ export default function Onboarding() {
   }
 
   return (
-    <Screen hero>
-      <PageHeading eyebrow="SENİN ZAMANIN. SENİN DENGEN." title={"Dijital dünyada,\nkendine yer aç."} body="Sosyal medyayı ölç, anla, küçük bir adım at." />
-      <Illustration kind="welcome" />
+    <Screen>
+      <PageHeading title={"Dijital dünyada,\nkendine yer aç."} body="Sosyal medyayı ölç, anla, küçük bir adım at." />
       <Card tinted>
         <Text style={s.eyebrow}>BİR KÜÇÜK ADIMLA BAŞLAR</Text>
         <Text style={s.subtitle}>Daha çok fark et. Kendin için üret.</Text>
-        <Journey current={0} />
         <Text style={s.muted}>Kategori özetlerini keşfet, dengeni anla ve sana uygun kısa bir görev seç.</Text>
       </Card>
       <View style={s.numberedRow}>

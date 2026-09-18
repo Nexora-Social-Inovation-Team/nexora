@@ -177,7 +177,8 @@ export function AppShell({
   return (
     <div className={`${container} flex flex-col gap-10 py-8 sm:flex-row`}>
       <nav aria-label="Panel menüsü" className="flex shrink-0 flex-col items-start gap-3 sm:w-56">
-        <Link to="/" className={wordmark}>
+        <Link to="/" className={`${wordmark} flex items-center gap-2`}>
+          <Mark />
           {t("brand")}
         </Link>
         <p className="rounded-full border border-line bg-band px-3 py-1 text-sm font-medium">

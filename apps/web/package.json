@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test": "echo \"nexora-web: no unit tests; run test:e2e for Playwright\"",
     "test:e2e": "playwright test",
-    "test:e2e:demo": "playwright test -c e2e/playwright.config.ts"
+    "test:e2e:demo": "playwright test -c e2e/playwright.config.ts",
+    "shots": "bun scripts/shots.mjs"
   },
   "dependencies": {
     "@nexora/shared": "workspace:*",

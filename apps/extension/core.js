@@ -112,6 +112,20 @@ export const totalMinutes = (minutes) => Object.values(minutes).reduce((sum, n) 
 /** Popup line: rounded minutes, or "<1 dk" while the first half minute is still adding up. */
 export const minutesLabelTr = (seconds) => (seconds >= 30 ? `${Math.round(seconds / 60)} dk` : "<1 dk");
 
+/**
+ * Send state for the popup's status row, as `{ state, text }`.
+ *
+ * Pure so it can be tested without a DOM: popup.js only paints the result. The
+ * dot beside the text is aria-hidden, so this text is what carries the state
+ * for a screen reader and for anyone who cannot separate the colours.
+ */
+export function syncLabel(state) {
+  if (state.sendBlocked) return { state: "error", text: state.lastStatus || "Gönderilemedi" };
+  if (!state.lastSentAt) return { state: "idle", text: "Gönderim bekliyor" };
+  const at = new Date(state.lastSentAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  return { state: "ok", text: `Gönderildi · ${at}` };
+}
+
 /** Fresh accumulator for `day`. An open checkpoint keeps running into the new period. */
 export const startPeriod = (state, day) => ({ ...state, seconds: {}, sentTotal: 0, periodStart: day });
 

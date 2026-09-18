@@ -19,6 +19,7 @@ import {
   saveState,
   sendNow,
   sendSummary,
+  syncLabel,
   todayUtc,
   unblockSending,
   update,
@@ -620,5 +621,32 @@ describe("static privacy scan", () => {
     expect(manifest.web_accessible_resources).toBeUndefined();
     expect(manifest.permissions).toEqual(["tabs", "storage", "alarms", "idle"]);
     expect(manifest.host_permissions).toEqual(["http://localhost:3000/*"]);
+  });
+});
+
+describe("syncLabel", () => {
+  it("waits before the first send", () => {
+    expect(syncLabel({ lastSentAt: null, sendBlocked: false })).toEqual({
+      state: "idle",
+      text: "Gönderim bekliyor",
+    });
+  });
+
+  it("reports the time of the last send", () => {
+    const { state, text } = syncLabel({ lastSentAt: "2026-09-15T11:05:00.000Z", sendBlocked: false });
+    expect(state).toBe("ok");
+    expect(text).toMatch(/^Gönderildi · \d{2}:\d{2}$/);
+  });
+
+  it("shows why it is blocked, and never a stale success", () => {
+    // A blocked send keeps lastSentAt from the previous success; the row must
+    // still read as an error rather than quietly showing the old timestamp.
+    expect(
+      syncLabel({ lastSentAt: "2026-09-15T11:05:00.000Z", sendBlocked: true, lastStatus: "Veli onayı yok." }),
+    ).toEqual({ state: "error", text: "Veli onayı yok." });
+  });
+
+  it("falls back to a message when the block has no status", () => {
+    expect(syncLabel({ sendBlocked: true, lastStatus: "" }).text).toBe("Gönderilemedi");
   });
 });

@@ -32,7 +32,10 @@
           <button id="clear" type="button" class="secondary">Temizle</button>
         </div>
       </div>
-      <p id="last" class="hint sync-status" aria-live="polite"></p>
+      <p id="last" class="sync-status" aria-live="polite" data-state="idle">
+        <span class="sync-dot" aria-hidden="true"></span>
+        <span id="last-text"></span>
+      </p>
     </main>
     <script type="module" src="popup.js"></script>
   </body>

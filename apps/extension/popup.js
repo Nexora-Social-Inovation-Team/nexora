@@ -6,6 +6,7 @@ import {
   minutesLabelTr,
   saveState,
   sendNow,
+  syncLabel,
   update,
 } from "./core.js";
 
@@ -14,6 +15,21 @@ const $ = (id) => document.getElementById(id);
 function setStatus(text, state) {
   $("status").textContent = text;
   $("status").dataset.state = state;
+}
+
+/** Paints what syncLabel() decided; the dot beside it is aria-hidden. */
+function setSync(state) {
+  const { state: kind, text } = syncLabel(state);
+  $("last").dataset.state = kind;
+  $("last-text").textContent = text;
+}
+
+/** One-shot confirmation on the dot; the class has to leave again to re-fire. */
+function flashSync() {
+  const row = $("last");
+  row.classList.remove("flash");
+  void row.offsetWidth; // restart the animation
+  row.classList.add("flash");
 }
 
 function render(state) {
@@ -48,11 +64,7 @@ function render(state) {
   $("pause").textContent = state.paused ? "Devam et" : "Duraklat";
   $("pause").setAttribute("aria-pressed", String(state.paused));
 
-  const sent = state.lastSentAt
-    ? `Son gönderim: ${new Date(state.lastSentAt).toLocaleTimeString("tr-TR")}`
-    : "Henüz gönderilmedi.";
-  $("last").textContent = state.lastStatus ? `${sent} — ${state.lastStatus}` : sent;
-  $("last").dataset.state = state.sendBlocked ? "error" : "ok";
+  setSync(state);
 
   if (entries.length === 0) {
     setStatus("Henüz kategori dakikası yok. Tarayıcıda gezindikçe burada birikir.", "empty");
@@ -73,9 +85,12 @@ async function main() {
 
   $("send").addEventListener("click", async () => {
     $("send").disabled = true;
-    $("last").textContent = "Gönderiliyor…";
+    $("last").dataset.state = "sending";
+    $("last-text").textContent = "Gönderiliyor";
     try {
-      render(await sendNow());
+      const next = await sendNow();
+      render(next);
+      if (!next.sendBlocked) flashSync();
     } catch {
       setStatus("Özet gönderilemedi. Yeniden dene.", "error");
     } finally {

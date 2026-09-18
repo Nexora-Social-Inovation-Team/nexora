@@ -254,6 +254,41 @@ describe("screen 4 — koç ve mikro-görev", () => {
     );
   });
 
+  it("offers no complete button once the week's task is already done", async () => {
+    // Regression: the coach payload carries task_id but no status, so the screen
+    // kept offering the button after a completion and the task could be
+    // "completed" again and again. The API is idempotent, the screen was not.
+    fetchMock.mockImplementation((url: string) =>
+      String(url).includes("/reports/weekly")
+        ? res(200, {
+            youthId: "usr_deniz",
+            period: "2026-09-08/2026-09-15",
+            score: { value: 80, reasons: REASONS },
+            distribution: DISTRIBUTION,
+            trend: [],
+            task: { id: "task_abc", title: "15 dakikalık bilim molası", status: "completed" },
+            share_text: null,
+            empty: false,
+          })
+        : res(200, {
+            tips: ["Tip bir.", "Tip iki.", "Tip üç."],
+            task: {
+              title: "15 dakikalık bilim molası",
+              steps: ["İlgini çeken bir konu seç.", "15 dakika bak.", "Bir cümle yaz."],
+              eta_minutes: 15,
+            },
+            share_text: "Deniz bu hafta kısa bir bilim görevi seçti.",
+            source: "fallback",
+            task_id: "task_abc",
+          }),
+    );
+
+    await render(<Coach />);
+
+    expect(await screen.findByText("✦ Bu haftaki görevini tamamladın")).toBeTruthy();
+    expect(screen.queryByText("Görevi tamamladım")).toBeNull();
+  });
+
   it("completes the task with POST /tasks/:id/complete", async () => {
     await render(<Coach />);
 

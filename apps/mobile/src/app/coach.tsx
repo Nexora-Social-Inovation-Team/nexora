@@ -2,10 +2,13 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-import type { CoachResponse } from "@nexora/shared";
+import type { CoachResponse, WeeklyReport } from "@nexora/shared";
 
-import { completeTask, failureCode, getCoach } from "@/api";
-import { Btn, Card, PageHeading, Screen, StateView, s, useActiveGate } from "@/ui";
+import { completeTask, failureCode, getCoach, getWeeklyReport } from "@/api";
+import { Btn, Card, PageHeading, Screen, StateView, TaskDone, s, useActiveGate } from "@/ui";
+
+const reportTask = (report: WeeklyReport | null): WeeklyReport["task"] =>
+  report && !report.empty ? report.task : null;
 
 /** Screen 4 — three tips plus one micro-task. */
 export default function Coach() {
@@ -13,11 +16,17 @@ export default function Coach() {
   const [view, setView] = useState<"loading" | "ready" | "empty" | "error">("loading");
   const [problem, setProblem] = useState<string>();
   const [coach, setCoach] = useState<CoachResponse | null>(null);
+  // The coach payload carries task_id but no status, so the week's task state
+  // comes from the report — the same source the score screen already reads.
+  const [done, setDone] = useState(false);
 
   const load = useCallback(async () => {
     setView("loading");
     try {
-      setCoach(await getCoach());
+      const [next, report] = await Promise.all([getCoach(), getWeeklyReport().catch(() => null)]);
+      const task = reportTask(report);
+      setCoach(next);
+      setDone(task?.id === next.task_id && task.status === "completed");
       setView("ready");
     } catch (error) {
       const code = failureCode(error);
@@ -42,6 +51,7 @@ export default function Coach() {
     if (!coach) return;
     try {
       await completeTask(coach.task_id);
+      setDone(true);
       router.replace({ pathname: "/done", params: { share: coach.share_text } });
     } catch (error) {
       setProblem(error instanceof Error ? error.message : "Görev tamamlanamadı.");
@@ -83,11 +93,15 @@ export default function Coach() {
             ))}
             <Text style={s.muted}>Tahmini süre: {coach.task.eta_minutes} dk</Text>
           </Card>
-          <Btn
-            label="Görevi tamamladım"
-            onPress={() => void complete()}
-            hint="Görevi tamamlandı olarak işaretler"
-          />
+          {done ? (
+            <TaskDone title={coach.task.title} />
+          ) : (
+            <Btn
+              label="Görevi tamamladım"
+              onPress={() => void complete()}
+              hint="Görevi tamamlandı olarak işaretler"
+            />
+          )}
           {problem ? <Text style={s.error}>{problem}</Text> : null}
           <Btn label="Dengeme dön" variant="ghost" onPress={() => router.replace("/score")} />
         </>

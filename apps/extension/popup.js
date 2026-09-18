@@ -1,6 +1,9 @@
 /* global chrome, document */
 import {
   LABELS_TR,
+  accrualStateTr,
+  activeTab,
+  categoryOfTab,
   clearActivity,
   loadState,
   minutesLabelTr,
@@ -32,12 +35,27 @@ function flashSync() {
   row.classList.add("flash");
 }
 
-function render(state) {
+/**
+ * The same two facts `settle()` reads, so the popup reports the gate the worker
+ * actually applies. The tab object stays a local: only a category and a boolean
+ * leave this function, never the url (docs/PRIVACY.md).
+ */
+async function tabContext() {
+  try {
+    const tab = await activeTab();
+    return { audible: tab?.audible === true, category: categoryOfTab(tab) };
+  } catch {
+    return { audible: false, category: null };
+  }
+}
+
+function render(state, context = { audible: false, category: null }) {
   const entries = Object.entries(state.seconds).filter(([, seconds]) => seconds > 0);
   const total = entries.reduce((sum, [, seconds]) => sum + seconds, 0);
   $("total").textContent = total > 0 && total < 30 ? "<1" : Math.round(total / 60).toLocaleString("tr-TR");
-  $("activity").textContent = state.paused ? "Duraklatıldı" : "Sayım açık";
-  $("activity").dataset.paused = String(state.paused);
+  const accrual = accrualStateTr(state, context);
+  $("activity").textContent = accrual.pill;
+  $("activity").dataset.paused = String(accrual.state !== "counting");
   const list = $("minutes");
   list.replaceChildren(
     ...entries.map(([category, seconds]) => {
@@ -66,21 +84,30 @@ function render(state) {
 
   setSync(state);
 
-  if (entries.length === 0) {
+  /*
+   * Why it is or is not counting beats a period start nobody asked about: a
+   * browser sitting in the background stops accrual, and saying "Sayım sürüyor"
+   * through that is what makes the counter look broken.
+   *
+   * With nothing collected yet, only a gate that actually blocks accrual gets
+   * to speak. An unmapped page is not a fault — "gezindikçe burada birikir"
+   * tells a first-time user more than naming the tab they happen to be on.
+   */
+  const blocked = accrual.state !== "counting" && accrual.state !== "offtopic";
+  if (entries.length === 0 && !blocked) {
     setStatus("Henüz kategori dakikası yok. Tarayıcıda gezindikçe burada birikir.", "empty");
-  } else if (state.paused) {
-    setStatus("Duraklatıldı.", "ready");
   } else {
-    setStatus(`Sayım sürüyor (${state.periodStart} başlangıçlı).`, "ready");
+    setStatus(accrual.text, accrual.state === "counting" ? "ready" : "empty");
   }
 }
 
 async function main() {
-  render(await loadState());
+  const paint = async (state) => render(state ?? (await loadState()), await tabContext());
+  await paint();
 
   // An open popup follows the service worker live.
   chrome.storage.onChanged.addListener((_changes, area) => {
-    if (area === "local") void loadState().then(render);
+    if (area === "local") void paint();
   });
 
   $("send").addEventListener("click", async () => {
@@ -89,7 +116,7 @@ async function main() {
     $("last-text").textContent = "Gönderiliyor";
     try {
       const next = await sendNow();
-      render(next);
+      await paint(next);
       if (!next.sendBlocked) flashSync();
     } catch {
       setStatus("Özet gönderilemedi. Yeniden dene.", "error");
@@ -99,12 +126,12 @@ async function main() {
   });
   $("pause").addEventListener("click", async () => {
     const current = await loadState();
-    render(await update({ paused: !current.paused })); // settles first, then stops accruing
+    await paint(await update({ paused: !current.paused })); // settles first, then stops accruing
   });
   $("clear").addEventListener("click", async () => {
     const cleared = clearActivity(await loadState());
     await saveState(cleared);
-    render(cleared);
+    await paint(cleared);
   });
 }
 

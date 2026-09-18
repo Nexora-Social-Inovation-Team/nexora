@@ -7,6 +7,7 @@ import { CATEGORY_LABELS_TR, categoryMinutesSchema, findForbiddenKey, signalsReq
 import {
   ACTIVITY_KEYS,
   LABELS_TR,
+  accrualStateTr,
   MAX_SEGMENT_SECONDS,
   autoSend,
   buildSummaryBody,
@@ -648,5 +649,38 @@ describe("syncLabel", () => {
 
   it("falls back to a message when the block has no status", () => {
     expect(syncLabel({ sendBlocked: true, lastStatus: "" }).text).toBe("Gönderilemedi");
+  });
+});
+
+describe("accrualStateTr", () => {
+  const counting = { paused: false, focused: true, idleState: "active" };
+  const watching = { category: "entertainment" };
+
+  it("names the category while it counts", () => {
+    expect(accrualStateTr(counting, watching)).toMatchObject({ state: "counting", text: "Eğlence sayılıyor." });
+  });
+
+  it("says the browser is in the background rather than claiming to count", () => {
+    // The whole reason this exists: accruing() stops on an unfocused window and
+    // the popup used to keep saying "Sayım sürüyor" straight through it.
+    const { state, pill } = accrualStateTr({ ...counting, focused: false }, watching);
+    expect(state).toBe("unfocused");
+    expect(pill).toBe("Beklemede");
+  });
+
+  it("stops on a silent idle tab but keeps counting a video", () => {
+    const idle = { ...counting, idleState: "idle" };
+    expect(accrualStateTr(idle, watching).state).toBe("idle");
+    expect(accrualStateTr(idle, { ...watching, audible: true }).state).toBe("counting");
+  });
+
+  it("checks the gates in the order accruing() applies them", () => {
+    // Paused wins over everything, and a locked screen wins over audio.
+    expect(accrualStateTr({ ...counting, paused: true, focused: false }, watching).state).toBe("paused");
+    expect(accrualStateTr({ ...counting, idleState: "locked" }, { ...watching, audible: true }).state).toBe("locked");
+  });
+
+  it("explains an unmapped page instead of looking stuck", () => {
+    expect(accrualStateTr(counting, { category: null }).state).toBe("offtopic");
   });
 });

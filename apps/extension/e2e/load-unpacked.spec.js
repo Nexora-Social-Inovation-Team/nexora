@@ -73,7 +73,11 @@ test("loads unpacked, starts the service worker and opens the popup", async () =
     await expect(page.locator("#minutes li")).toHaveCount(2);
     await expect(page.getByText("Bilim")).toBeVisible();
     await expect(page.getByText("Eğlence")).toBeVisible();
-    await expect(page.getByRole("status")).toContainText("Sayım sürüyor");
+    // The status line now reports the gate accruing() actually applies. Here the
+    // popup is opened as its own tab, so the active tab is a chrome-extension://
+    // page that maps to no category — which is exactly what it should say. In
+    // the real popup the active tab is whatever the youth is reading.
+    await expect(page.getByRole("status")).toContainText("bir kategoriye eşlenmiyor");
   } finally {
     await context.close();
   }

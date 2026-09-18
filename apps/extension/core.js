@@ -1,5 +1,5 @@
 /* global chrome, fetch, URL */
-import { categorize } from "./dictionary.js";
+import { LABELS_TR, categorize } from "./dictionary.js";
 
 export * from "./dictionary.js";
 
@@ -72,6 +72,35 @@ export const accruing = (state, audible = false) =>
   state.focused !== false &&
   state.idleState !== "locked" &&
   (state.idleState !== "idle" || audible === true);
+
+/**
+ * Why the counter is or is not running, in Turkish, for the popup.
+ *
+ * `accruing()` has four ways to say no and the popup used to report only one of
+ * them, so a browser in the background still read "Sayım açık" while nothing
+ * accrued — which looks exactly like a broken counter. Pure, so the wording is
+ * testable without a DOM.
+ */
+export function accrualStateTr(state, { audible = false, category = null } = {}) {
+  if (state.paused) return { state: "paused", pill: "Duraklatıldı", text: "Duraklatıldı." };
+  if (state.focused === false) {
+    return { state: "unfocused", pill: "Beklemede", text: "Chrome arka planda. Öne aldığında sayım sürer." };
+  }
+  if (state.idleState === "locked") {
+    return { state: "locked", pill: "Beklemede", text: "Ekran kilitli. Sayım duruyor." };
+  }
+  if (state.idleState === "idle" && !audible) {
+    return {
+      state: "idle",
+      pill: "Beklemede",
+      text: "Birkaç dakikadır hareket yok ve sekme sessiz. Ses çalarsa sayım kendiliğinden sürer.",
+    };
+  }
+  if (!category) {
+    return { state: "offtopic", pill: "Sayım açık", text: "Bu sayfa bir kategoriye eşlenmiyor, o yüzden sayılmıyor." };
+  }
+  return { state: "counting", pill: "Sayım açık", text: `${LABELS_TR[category] ?? category} sayılıyor.` };
+}
 
 const addSeconds = (seconds, category, n) =>
   n > 0 ? { ...seconds, [category]: (seconds[category] ?? 0) + n } : seconds;

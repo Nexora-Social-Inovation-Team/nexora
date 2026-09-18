@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nexora-web",
+  // Pinned, not "today": a compatibility date is the runtime contract, and a
+  // moving one turns an unrelated deploy into a runtime change.
+  "compatibility_date": "2025-09-02",
+  // TanStack Start's server entry and its deps expect node builtins.
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true }
+}

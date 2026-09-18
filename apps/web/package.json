@@ -9,7 +9,10 @@
     "test": "echo \"nexora-web: no unit tests; run test:e2e for Playwright\"",
     "test:e2e": "playwright test",
     "test:e2e:demo": "playwright test -c e2e/playwright.config.ts",
-    "shots": "bun scripts/shots.mjs"
+    "shots": "bun scripts/shots.mjs",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "build": "vite build"
   },
   "dependencies": {
     "@nexora/shared": "workspace:*",
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/vite-plugin": "^1.56.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.0",
@@ -30,6 +34,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "wrangler": "^4.135.0"
   }
 }

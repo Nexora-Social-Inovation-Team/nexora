@@ -30,13 +30,20 @@ export const identity = new Elysia({ name: "identity" })
 
     const token = await signSession(user.id);
     // Web uses this cookie; Expo and the extension send the same value as a
-    // Bearer token. Secure only in production so http://localhost works.
+    // Bearer token.
+    //
+    // Deployed, the panel and the API are different origins, and a Lax cookie
+    // is simply not sent on a cross-site fetch — login would appear to succeed
+    // and every later request would arrive anonymous. None requires Secure,
+    // which is why the two move together; locally both stay off so plain
+    // http://localhost keeps working.
+    const crossSite = process.env.NODE_ENV === "production";
     cookie[SESSION_COOKIE]?.set({
       value: token,
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: crossSite ? "none" : "lax",
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: crossSite,
       maxAge: SESSION_TTL_SECONDS,
     });
     return { user: toUserResponse(user), token };

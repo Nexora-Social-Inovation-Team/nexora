@@ -8,7 +8,16 @@ import { identity } from "./identity";
 import { report } from "./report";
 import { signalsScore } from "./score";
 
-export const app = new Elysia()
+/**
+ * Elysia compiles each handler with `new Function`, and workerd forbids code
+ * generation from strings — on Workers every request died with
+ * `EvalError: Code generation from strings disallowed for this context`
+ * before any route ran. `aot: false` takes the interpreted path instead.
+ * Bun keeps the compiled one; the routes are identical either way.
+ */
+const onWorkerd = typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+
+export const app = new Elysia({ aot: !onWorkerd })
   .use(cors({ origin: env.WEB_ORIGIN, credentials: true }))
   // Single error shape for every route (docs/API.md). Nothing is logged here:
   // a URL or a connection string must never reach the log (docs/PRIVACY.md).

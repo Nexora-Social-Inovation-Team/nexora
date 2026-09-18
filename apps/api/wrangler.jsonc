@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nexora-api",
+  // Pinned: a compatibility date is the runtime contract. Also the date from
+  // which nodejs_compat populates process.env from vars and secrets, which is
+  // how src/env.ts reads its configuration.
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/worker.ts",
+  "observability": { "enabled": true },
+  "vars": {
+    "NODE_ENV": "production"
+  }
+}

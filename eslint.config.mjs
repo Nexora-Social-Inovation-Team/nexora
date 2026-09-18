@@ -12,6 +12,8 @@ export default tseslint.config(
       "**/.expo/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      // wrangler's bundler output, regenerated on every dev run and deploy
+      "**/.wrangler/**",
       // Workflow scripts: `agent`/`phase`/`parallel`/`log` are runtime globals
       // injected by the Claude Code workflow host, not app code to lint.
       "**/.claude/**",

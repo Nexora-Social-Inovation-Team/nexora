@@ -9,3 +9,10 @@ build/
 .expo/
 playwright-report/
 test-results/
+
+# wrangler local secrets
+.dev.vars
+.dev.vars.*
+
+# wrangler build output
+.wrangler/

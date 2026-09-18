@@ -268,7 +268,8 @@ beforeEach(() => {
   tasks = [];
   recommendations = [];
   env.HF_TOKEN = "hf_test_token";
-  env.HF_MODEL_ID = "Trendyol/Trendyol-LLM-7b-chat-v1.0";
+  env.HF_MODEL_ID = "Trendyol/Trendyol-LLM-7B-chat-v4.1.0";
+  env.HF_BASE_URL = "https://router.huggingface.co/v1";
   // mockClear, not mockReset: reset drops vitest's settled-result tracking.
   for (const spy of [userFindUnique, scoreFindFirst, scoreFindMany, summaryFindFirst, taskCreate, taskFindUnique,
     taskFindFirst, taskFindMany, taskUpdate, recFindFirst, recCreate, recUpdate, hfFetch]) spy.mockClear();
@@ -504,9 +505,31 @@ describe("GET /coach/recommendation — model vs fallback", () => {
 
     await getCoach();
 
+    // The body is rebuilt field by field from the allow-list, so it must carry
+    // no link at all. The old carve-out for the router host scanned the
+    // RequestInit, where the URL never appears, so it asserted nothing.
     const sent = JSON.stringify(hfFetch.mock.calls[0]?.[1] ?? {});
     expect(sent.toLowerCase()).not.toContain("hostname");
-    expect(sent).not.toMatch(/https?:\/\/(?!router\.huggingface\.co)/);
+    expect(sent).not.toMatch(/https?:\/\//);
+  });
+
+  it("posts to the HuggingFace router by default", async () => {
+    modelReturns(MODEL_COACH);
+
+    await getCoach();
+
+    expect(hfFetch.mock.calls[0]?.[0]).toBe("https://router.huggingface.co/v1/chat/completions");
+  });
+
+  it("posts to HF_BASE_URL when one is set, trailing slash and all", async () => {
+    // A self-served vLLM (docs/colab/trendyol-coach.ipynb) speaks the same
+    // dialect; only the host moves.
+    env.HF_BASE_URL = "https://demo.trycloudflare.com/v1/";
+    modelReturns(MODEL_COACH);
+
+    await getCoach();
+
+    expect(hfFetch.mock.calls[0]?.[0]).toBe("https://demo.trycloudflare.com/v1/chat/completions");
   });
 });
 

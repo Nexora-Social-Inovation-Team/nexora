@@ -19,8 +19,12 @@ import { fallbackFor } from "./fallback";
  * leaves this process (docs/PRIVACY.md, docs/ARCHITECTURE.md "LLM boundary").
  */
 
-/** OpenAI-compatible router; HF_MODEL_ID picks the Trendyol-LLM deployment. */
-const HF_URL = "https://router.huggingface.co/v1/chat/completions";
+/**
+ * OpenAI-compatible chat endpoint. HF_MODEL_ID picks the deployment, HF_BASE_URL
+ * the host: the HF router by default, a self-served vLLM when one is measured
+ * (docs/colab/trendyol-coach.ipynb). Read per call so a test can repoint it.
+ */
+const hfUrl = () => `${env.HF_BASE_URL.replace(/\/+$/, "")}/chat/completions`;
 
 export const SYSTEM_PROMPT = [
   "Sen 13-18 yaş arası gençler için Türkçe yazan bir dijital denge koçusun.",
@@ -104,7 +108,7 @@ async function modelCoach(youthId: string, score: ScoreRow): Promise<Coach | nul
   });
 
   try {
-    const response = await fetch(HF_URL, {
+    const response = await fetch(hfUrl(), {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${env.HF_TOKEN}` },
       body: JSON.stringify({

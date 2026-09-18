@@ -35,6 +35,16 @@ const envSchema = z.object({
   // API-process only. Never shipped to web, mobile or extension.
   HF_TOKEN: optionalEnv,
   HF_MODEL_ID: optionalEnv,
+  /**
+   * Base URL of the OpenAI-compatible chat API. Default is the HF router; a
+   * self-served vLLM (docs/colab/trendyol-coach.ipynb) is the other measured
+   * host. Same empty-means-unset preprocess as optionalEnv: a bare
+   * `HF_BASE_URL=` line would otherwise reach `.url()` as "" and kill boot.
+   */
+  HF_BASE_URL: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.url().default("https://router.huggingface.co/v1"),
+  ),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -36,9 +36,10 @@ User payload (structured, not prose dump of PII):
 
 Never send hostnames, messages, or the youth’s real-world identifiers beyond display-safe first name if needed. Prefer no name; `share_text` can say “Bu hafta…”.
 
-## HuggingFace
+## Provider
 
 - Env: `HF_TOKEN`, `HF_MODEL_ID` (Trendyol-LLM id as used on HuggingFace).
+- Env: `HF_BASE_URL` — base of the OpenAI-compatible chat API. Empty means the HF router, which is the default and the only path the demo depends on. Any other OpenAI-compatible host goes here; [`../colab/trendyol-coach.ipynb`](../colab/trendyol-coach.ipynb) serves Trendyol-LLM from Colab that way.
 - Timeout: ~20s. On timeout/network/parse/policy fail → fallback.
 - Do not stream in MVP (simpler for Expo).
 
@@ -81,3 +82,5 @@ After Zod: if any string matches diagnostic terms (`teşhis`, `depresyon tanıs�
 **Verified live on Neon — 2026-09-17:** with `HF_TOKEN` and `HF_MODEL_ID` unset, `GET /coach/recommendation` answered 200 + `X-Nexora-Coach: fallback` and a schema-valid 3-tip payload for all three personas (80 / 38 / 93), and the `<50` band tips differ from the `>=80` band. The model path is blocked on the provider, not on this block: `GET https://router.huggingface.co/v1/models` returns 200 for our token but lists no Trendyol id among the 143 served models.
 
 **Model path measured — 2026-09-17, `Qwen/Qwen3-8B` via the router (provider `nscale`):** the model answers our real prompt in ~3.5–4 s and satisfies `coachSchema` in roughly 3 calls out of 4; the rest fail on an empty string, a fourth tip or malformed JSON and take the canned fallback, exactly as designed. Two findings are now pinned in code: the request budget must cover the model's reasoning pass (`max_tokens: 500` returned `content: null` every time — see the regression test *"falls back when a reasoning model spends the whole budget on reasoning_content"*), and HF's free monthly credit is small — once depleted the router answers `402` and every call falls back. `response_format: { type: "json_object" }` measured the same 3/4; strict `json_schema` was not measurable before the credit ran out and is the obvious next lever if the model path ever needs to be reliable.
+
+**Trendyol path — not measured yet.** `HF_BASE_URL` now lets the coach talk to any OpenAI-compatible host, so the model the product documents can finally be tested without renting an Inference Endpoint: [`../colab/trendyol-coach.ipynb`](../colab/trendyol-coach.ipynb) serves `Trendyol/Trendyol-LLM-7B-chat-v4.1.0` (Qwen2.5-7B based, so no reasoning pass to budget for) on a free Colab T4 via vLLM, 4-bit bitsandbytes, and replays the three real fixture prompts. Write its table here next to the Qwen3 numbers — schema hit rate, p50/p95, fence-rescue and banned-phrase counts — and say plainly whether it beats 3/4. Until that row exists, the demo default stays the canned fallback and nothing in [`../DEMO.md`](../DEMO.md) changes.

@@ -6,7 +6,7 @@ NEXORA product decisions live in Notion. This repo distills them into agent-exec
 
 1. **Product scope and copy:** Notion **MVP Scope** wins over the hub page and over older roadmap wording.
 2. **Engineering constraints (must-nots, endpoints, schemas):** `AGENTS.md` + `docs/API.md` + `docs/PRIVACY.md` win. Do not invent endpoints or data fields.
-3. **Phase A stack:** NeonDB + Prisma + Trendyol-LLM (HuggingFace). Hub-page PostgreSQL 16, pg-boss, Ollama/llama.cpp, and BERTurk are **Phase B+**, not MVP.
+3. **Phase A stack:** NeonDB + Prisma + Trendyol-LLM (HuggingFace). Hub-page PostgreSQL 16, pg-boss, Ollama/llama.cpp, and BERTurk are **Phase B+**, not MVP. A model served from Colab for measurement ([`colab/trendyol-coach.ipynb`](colab/trendyol-coach.ipynb)) is a development-time host, not a stack change: it ships nothing and the demo never calls it.
 4. If this repo and Notion diverge after a later Notion edit, update these docs — do not silently follow the stale file.
 
 ## Notion

@@ -29,7 +29,7 @@ apps/extension/              stub
 packages/shared/             src/index.ts — export types from docs/API.md
 packages/score/              src/index.ts — export placeholder computeScore later filled in 03
 .gitignore
-.env.example                 DATABASE_URL, HF_TOKEN, HF_MODEL_ID, SESSION_SECRET
+.env.example                 DATABASE_URL, HF_BASE_URL, HF_TOKEN, HF_MODEL_ID, SESSION_SECRET
 ```
 
 `packages/shared` **must** export (copy from [`../API.md`](../API.md)):
@@ -59,5 +59,6 @@ bun run test          # shared schema tests at minimum
 
 - [ ] `bun install` succeeds.
 - [ ] `packages/shared` typechecks and Vitest covers: coach schema accepts the example in API.md; rejects `tips` of length 2; rejects extra `url` key on a fake signals object if you add that schema here.
-- [ ] `.env.example` lists `DATABASE_URL`, `HF_TOKEN`, `HF_MODEL_ID`, `SESSION_SECRET` with empty values.
+- [ ] `.env.example` lists `DATABASE_URL`, `HF_BASE_URL`, `HF_TOKEN`, `HF_MODEL_ID`, `SESSION_SECRET` with empty values.
+      (`HF_BASE_URL` empty means the HuggingFace router — see block 04.)
 - [ ] README at repo root still describes docs-first state until 01 exists; do not claim the API runs.

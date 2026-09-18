@@ -18,7 +18,15 @@ import { signalsScore } from "./score";
 const onWorkerd = typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
 
 export const app = new Elysia({ aot: !onWorkerd })
-  .use(cors({ origin: env.WEB_ORIGIN, credentials: true }))
+  // A callback, not the array: reading env here would run at module scope, and
+  // Cloudflare evaluates that while validating an upload, before any secret is
+  // set. The allow-list is the same one WEB_ORIGIN has always held.
+  .use(
+    cors({
+      origin: (request) => env.WEB_ORIGIN.includes(request.headers.get("origin") ?? ""),
+      credentials: true,
+    }),
+  )
   // Single error shape for every route (docs/API.md). Nothing is logged here:
   // a URL or a connection string must never reach the log (docs/PRIVACY.md).
   .onError({ as: "global" }, ({ code, error }) => {

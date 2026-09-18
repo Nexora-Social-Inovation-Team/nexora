@@ -303,6 +303,48 @@ Use [`API.md`](API.md) codes. Clients must implement:
 
 One Bun process + Neon is enough for a jury demo. Horizontal scale and workers are Phase C. Do not split microservices.
 
+## Deployment (Cloudflare Workers)
+
+Both workspaces run on Workers. Local development is unchanged — `bun run dev`
+still serves the API on Bun and the web on Vite.
+
+| | URL | Deploy |
+|---|---|---|
+| Web | `https://nexora-web.<account>.workers.dev` | `VITE_API_URL=<api url> bun run deploy` in `apps/web` |
+| API | `https://nexora-api.<account>.workers.dev` | `bun run deploy` in `apps/api` |
+
+Secrets on the API Worker: `DATABASE_URL`, `SESSION_SECRET`, `WEB_ORIGIN`
+(`wrangler secret put`). `NODE_ENV=production` is a plain var in
+`wrangler.jsonc` and is what switches the session cookie to cross-site.
+
+Four things workerd forces that Bun does not, each one measured rather than
+assumed, and each one now the single code path both runtimes take:
+
+- **No native query engine.** Prisma talks to Neon through
+  `@prisma/adapter-neon`. Verified against the real database under Node and Bun
+  before it was wired; no schema change, because `driverAdapters` stopped being
+  a preview feature in Prisma 6.19.
+- **No code generation from strings.** Elysia compiles handlers with
+  `new Function`, so every request died with `EvalError` before any route ran.
+  `aot: false` on workerd takes the interpreted path.
+- **No I/O across requests.** Neon's pool opens a WebSocket owned by the
+  request that created it, so login succeeded and everything after it hung with
+  "Cannot perform I/O on behalf of a different request". `poolQueryViaFetch`
+  sends each query as its own fetch.
+- **Top-level code runs at upload.** Cloudflare validates a Worker by executing
+  its module scope, where no secret exists yet, so the first deploy failed on
+  `Invalid environment`. `env`, the Prisma client and the HMAC key are all
+  built on first use. Bun still fails at startup because `app.listen(env.PORT)`
+  touches the config before the socket opens.
+
+The session cookie is `SameSite=None; Secure` in production: the panel and the
+API are different origins and a Lax cookie is not sent on a cross-site fetch —
+login would look fine and every later request would arrive anonymous.
+
+**Verified in a browser against the deployed pair — 2026-09-18:** parent login
+carried the cross-site cookie, and the panel switcher read 38 for Riskli and 93
+for Üretken off Neon, with every request 200.
+
 ## Key decisions
 
 | Decision | Rationale |

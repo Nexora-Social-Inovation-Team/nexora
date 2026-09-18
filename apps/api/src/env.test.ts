@@ -100,10 +100,15 @@ it("refuses to boot when a WEB_ORIGIN entry is not an absolute origin", () => {
   // `WEB_ORIGIN=WEB_ORIGIN=http://localhost:5173` (the key pasted twice) used
   // to parse, and the only symptom was the CORS plugin matching nothing: the
   // API answered 200 with no Access-Control-Allow-Origin and every browser
-  // login failed. env.ts promises a boot error instead of a runtime mystery.
-  // A subprocess, because env.ts parses once per module import.
+  // login failed. env.ts promises a loud error instead of a runtime mystery.
+  //
+  // The read is what throws, not the import: env.ts parses on first access so
+  // that Cloudflare can evaluate the module while validating an upload, before
+  // any secret exists. On Bun that first access is `app.listen(env.PORT)`, so
+  // a misconfigured server still dies before it opens a socket — which is what
+  // this touches. A subprocess, because the parse is cached per module.
   const run = (webOrigin: string) =>
-    spawnSync(process.execPath, ["-e", 'await import("./src/env.ts")'], {
+    spawnSync(process.execPath, ["-e", 'const { env } = await import("./src/env.ts"); env.PORT;'], {
       cwd: fileURLToPath(new URL("..", import.meta.url)),
       env: { ...process.env, DATABASE_URL: "x", SESSION_SECRET: "y", WEB_ORIGIN: webOrigin },
       encoding: "utf8",

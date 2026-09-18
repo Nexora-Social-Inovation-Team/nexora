@@ -57,13 +57,19 @@ export const toUserResponse = (user: SessionUser): User => ({
 // ponytail: HS256 over Web Crypto instead of a JWT dependency — the token
 // carries only { uid, exp }, so there is nothing to parse but a signature.
 // Upgrade path: @elysiajs/jwt if we ever need claims, kid rotation or JWKS.
-const keyPromise = crypto.subtle.importKey(
-  "raw",
-  new TextEncoder().encode(env.SESSION_SECRET),
-  { name: "HMAC", hash: "SHA-256" },
-  false,
-  ["sign", "verify"],
-);
+// Imported on first sign or verify, not at module scope: Cloudflare runs
+// top-level code to validate an upload, and reading SESSION_SECRET there throws
+// because the secret cannot exist until the Worker does.
+let key: Promise<CryptoKey> | null = null;
+
+const sessionKey = () =>
+  (key ??= crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(env.SESSION_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  ));
 
 const b64url = (bytes: ArrayBuffer | Uint8Array) =>
   btoa(String.fromCharCode(...new Uint8Array(bytes)))
@@ -80,7 +86,7 @@ export async function signSession(userId: string): Promise<string> {
       JSON.stringify({ uid: userId, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS }),
     ),
   );
-  const signature = await crypto.subtle.sign("HMAC", await keyPromise, new TextEncoder().encode(payload));
+  const signature = await crypto.subtle.sign("HMAC", await sessionKey(), new TextEncoder().encode(payload));
   return `${payload}.${b64url(signature)}`;
 }
 
@@ -91,7 +97,7 @@ export async function verifySession(token: string | undefined): Promise<string |
   try {
     const ok = await crypto.subtle.verify(
       "HMAC",
-      await keyPromise,
+      await sessionKey(),
       fromB64url(signature),
       new TextEncoder().encode(payload),
     );

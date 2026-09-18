@@ -27,10 +27,18 @@ const envSchema = z.object({
   // Neon direct URL. Used by `prisma migrate`, never by the runtime client.
   DIRECT_URL: optionalEnv,
   PORT: z.coerce.number().int().positive().default(3000),
+  /**
+   * Every entry must be a real absolute origin. Without this check a typo like
+   * `WEB_ORIGIN=WEB_ORIGIN=http://localhost:5173` parses happily, the CORS
+   * plugin then matches nothing, and the only symptom is a browser refusing
+   * every response — a runtime mystery instead of the boot error this file
+   * promises. `http://localhost:5173` is a valid URL, so nothing legal is lost.
+   */
   WEB_ORIGIN: z
     .string()
     .default("http://localhost:5173,http://localhost:8081")
-    .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
+    .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean))
+    .pipe(z.array(z.url()).nonempty()),
   SESSION_SECRET: z.string().min(1, "SESSION_SECRET is required to sign sessions"),
   // API-process only. Never shipped to web, mobile or extension.
   HF_TOKEN: optionalEnv,

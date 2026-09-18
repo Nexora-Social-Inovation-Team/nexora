@@ -1,4 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { coachResponseSchema } from "@nexora/shared";
 import { expect, it, vi } from "vitest";
 
@@ -92,4 +94,24 @@ it("keeps the prisma scripts off `bun x`, which drops --env-file variables", () 
     expect(scripts[name]).toContain("--env-file=../../.env");
     expect(scripts[name]).not.toMatch(/\bx\s+prisma\b/);
   }
+});
+
+it("refuses to boot when a WEB_ORIGIN entry is not an absolute origin", () => {
+  // `WEB_ORIGIN=WEB_ORIGIN=http://localhost:5173` (the key pasted twice) used
+  // to parse, and the only symptom was the CORS plugin matching nothing: the
+  // API answered 200 with no Access-Control-Allow-Origin and every browser
+  // login failed. env.ts promises a boot error instead of a runtime mystery.
+  // A subprocess, because env.ts parses once per module import.
+  const run = (webOrigin: string) =>
+    spawnSync(process.execPath, ["-e", 'await import("./src/env.ts")'], {
+      cwd: fileURLToPath(new URL("..", import.meta.url)),
+      env: { ...process.env, DATABASE_URL: "x", SESSION_SECRET: "y", WEB_ORIGIN: webOrigin },
+      encoding: "utf8",
+    });
+
+  const bad = run("WEB_ORIGIN=http://localhost:5173,http://localhost:8081");
+  expect(bad.status).not.toBe(0);
+  expect(`${bad.stdout}${bad.stderr}`).toContain("Invalid environment: WEB_ORIGIN");
+
+  expect(run("http://localhost:5173,http://localhost:8081").status).toBe(0);
 });

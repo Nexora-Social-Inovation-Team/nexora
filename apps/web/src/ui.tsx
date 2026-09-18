@@ -84,12 +84,18 @@ function Header() {
       {/* The logo ramp as a hairline: the one place the brand gradient appears
           on a light page, and it carries no text. */}
       <div aria-hidden="true" className="h-[3px]" style={{ background: "var(--brand-ramp)" }} />
-      <nav aria-label="Ana menü" className={`${container} flex flex-wrap items-center gap-6 py-4`}>
-        <Link to="/" className={`${wordmark} flex items-center gap-2`}>
+      {/*
+        The bar wrapped lopsidedly on a phone: the grow spacer ate the first
+        row, so two links sat beside the wordmark and the rest dropped left.
+        Giving the brand the full first row below `sm` puts the links on one
+        even row of their own; the desktop bar is unchanged.
+      */}
+      <nav aria-label="Ana menü" className={`${container} flex flex-wrap items-center gap-x-5 gap-y-3 py-4 sm:gap-6`}>
+        <Link to="/" className={`${wordmark} flex w-full items-center gap-2 sm:w-auto`}>
           <Mark />
           {t("brand")}
         </Link>
-        <span className="grow" />
+        <span className="hidden grow sm:block" />
         <Link to="/how-it-works" className={navLink}>
           {t("nav.howItWorks")}
         </Link>
@@ -110,7 +116,7 @@ function Header() {
 function Footer() {
   const { t } = useTranslation();
   return (
-    <footer className="mx-2 mt-20 mb-2 rounded-3xl bg-accent px-6 py-12 text-bg sm:mx-4 sm:px-12 sm:py-16">
+    <footer className="mx-2 mt-12 mb-2 rounded-3xl bg-accent px-6 py-12 text-bg sm:mx-4 sm:mt-20 sm:px-12 sm:py-16">
       {/* The reference closes on one oversized statement at weight 500, then the links. */}
       <div className="mx-auto max-w-[78rem]">
         <p className={`${wordmark} flex items-center gap-2`}>
@@ -176,7 +182,11 @@ export function AppShell({
   const navigate = useNavigate();
   return (
     <div className={`${container} flex flex-col gap-10 py-8 sm:flex-row`}>
-      <nav aria-label="Panel menüsü" className="flex shrink-0 flex-col items-start gap-3 sm:w-56">
+      {/* A column of five stacked links ate the top of every phone screen. */}
+      <nav
+        aria-label="Panel menüsü"
+        className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 sm:w-56 sm:flex-col sm:items-start sm:gap-3"
+      >
         <Link to="/" className={`${wordmark} flex items-center gap-2`}>
           <Mark />
           {t("brand")}

@@ -24,7 +24,8 @@ function Skeleton() {
 
 function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) {
   const { t } = useTranslation();
-  const total = Math.max(1, ...Object.values(report.distribution));
+  // The busiest category, not the sum — bars are drawn relative to the peak.
+  const peak = Math.max(1, ...Object.values(report.distribution));
 
   return (
     <>
@@ -47,14 +48,28 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
         <h2 id="distribution-title" className="text-xl">
           {t("panel.distributionTitle")}
         </h2>
-        <ul className="mt-3 space-y-2">
+        {/*
+          The bar sits under its own label, not beside it. Inline, the fixed
+          w-44 label plus the value left about 80px on a phone, so a long bar
+          wrapped to a line of its own while a short one shrank to a dot — the
+          column stopped being comparable. A full-width track also gives the
+          zero rows something to be zero against, and matches the Expo screen.
+        */}
+        <ul className="mt-3 space-y-3">
           {CATEGORY_IDS.map((id) => {
             const minutes = report.distribution[id] ?? 0;
             return (
-              <li key={id} className="flex flex-wrap items-center gap-3">
-                <span className="w-44">{CATEGORY_LABELS_TR[id]}</span>
-                <span className="tabular-nums">{`${minutes} ${t("panel.minutes")}`}</span>
-                <span aria-hidden="true" className="h-2 rounded-full bg-link" style={{ width: `${(minutes / total) * 40}%` }} />
+              <li key={id} className="space-y-1">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span>{CATEGORY_LABELS_TR[id]}</span>
+                  <span className="tabular-nums">{`${minutes} ${t("panel.minutes")}`}</span>
+                </div>
+                <span aria-hidden="true" className="block h-2 rounded-full bg-band">
+                  <span
+                    className="block h-2 rounded-full bg-link"
+                    style={{ width: `${Math.round((minutes / peak) * 100)}%` }}
+                  />
+                </span>
               </li>
             );
           })}

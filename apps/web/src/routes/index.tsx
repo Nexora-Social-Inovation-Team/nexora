@@ -35,7 +35,7 @@ function Landing() {
         </figure>
       </section>
 
-      <section className={`${container} py-20 sm:py-28`}>
+      <section className={`${container} py-14 sm:py-28`}>
         <div className="mx-auto max-w-2xl text-center">
           <p className="eyebrow">{t("landing.cardsEyebrow")}</p>
           <h2 className="mt-4 text-4xl sm:text-5xl">{t("landing.cardsTitle")}</h2>

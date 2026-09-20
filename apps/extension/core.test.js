@@ -115,6 +115,33 @@ describe("categorize", () => {
     expect(categorize("")).toBeNull();
   });
 
+  it("counts the Turkish public education and technology programmes", () => {
+    for (const host of [
+      "btkakademi.gov.tr",
+      "www.teknofest.org",
+      "t3kys.com",
+      "deneyap.org",
+      "yok.gov.tr",
+      "thk.org.tr",
+      "ogmmateryal.eba.gov.tr",
+    ]) {
+      expect(categorize(host)).toBe("science");
+    }
+    expect(categorize("sozluk.gov.tr")).toBe("culture");
+    expect(categorize("dergipark.org.tr")).toBe("science");
+    expect(categorize("millikutuphane.gov.tr")).toBe("national_memory");
+    // A state-run streaming site is still entertainment: what the minute was
+    // spent on decides the category, never who owns the domain.
+    expect(categorize("tabii.com")).toBe("entertainment");
+    expect(categorize("trtizle.com")).toBe("entertainment");
+    expect(categorize("gsb.gov.tr")).toBe("sports");
+    expect(categorize("yee.org.tr")).toBe("culture");
+    expect(categorize("sanayi.gov.tr")).toBe("entrepreneurship");
+    // `.gov.tr` is not a blanket rule: e-Devlet is not study time.
+    expect(categorize("turkiye.gov.tr")).toBeNull();
+    expect(categorize("gib.gov.tr")).toBeNull();
+  });
+
   it("falls back to registry-controlled suffixes but never guesses from keywords", () => {
     expect(categorize("www.odtu.edu.tr")).toBe("science");
     expect(categorize("mit.edu")).toBe("science");

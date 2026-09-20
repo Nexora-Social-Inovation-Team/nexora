@@ -38,6 +38,13 @@ hostname, url, tab id or title. Settings (`apiBase`, `token`) live in `chrome.st
 
 ## Dictionary
 
+Turkish public programmes are hand rows, not a `.gov.tr` blanket: EBA, MEB, TÜBİTAK, DergiPark,
+BTK Akademi, Güvenli Web, YÖK, ÖSYM, TÜBA, ULAKBİM, TRT Akademi, TEKNOFEST, T3KYS, T3 Vakfı, Deneyap
+and THK count as study minutes; TDK's `sozluk.gov.tr`, KTB, the libraries and Sanal Müze count as
+culture; Milli Kütüphane joins the archives. e-Devlet or a tax office stays unknown, because a wrong
+category inflates the score — and TRT İzle or tabii is entertainment like any other stream: the
+minute decides the category, not who owns the domain.
+
 `dictionary.js` holds the hand-written rows and the registry-suffix fallback
 (`.edu`, `.edu.tr`, `.k12.tr`, `.ac.uk`, `.museum`). `dictionary.generated.js`
 adds ~11k hosts for `sports`, `entertainment`, `science` and `entrepreneurship`;

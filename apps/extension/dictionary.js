@@ -20,6 +20,26 @@ export const DICTIONARY = {
   "nationalgeographic.com": "science",
   "coursera.org": "science",
   "edx.org": "science",
+  // Turkish public education and technology programmes. `.gov.tr` as a whole
+  // stays out on purpose: e-Devlet and a tax office are not study minutes, and
+  // a wrong category inflates the score.
+  "btkakademi.gov.tr": "science",
+  "btk.gov.tr": "science",
+  "yok.gov.tr": "science",
+  "osym.gov.tr": "science",
+  "tuba.gov.tr": "science",
+  "ulakbim.gov.tr": "science",
+  "trtakademi.net": "science",
+  "teknofest.org": "science",
+  "t3kys.com": "science",
+  "t3vakfi.org": "science",
+  "deneyap.org": "science",
+  "dergipark.org.tr": "science",
+  // BTK's own media-literacy sites: the thing this product is arguing for.
+  "guvenliweb.org.tr": "science",
+  "guvenlicocuk.org.tr": "science",
+  // Türk Hava Kurumu: gliding and aviation training, not a sports broadcast.
+  "thk.org.tr": "science",
   // arts
   "behance.net": "arts",
   "artstation.com": "arts",
@@ -37,6 +57,7 @@ export const DICTIONARY = {
   "sporx.com": "sports",
   "fanatik.com.tr": "sports",
   "beinsports.com.tr": "sports",
+  "gsb.gov.tr": "sports",
   "olympics.com": "sports",
   "uefa.com": "sports",
   "fifa.com": "sports",
@@ -46,10 +67,20 @@ export const DICTIONARY = {
   "kulturportali.gov.tr": "culture",
   "muze.gov.tr": "culture",
   "tdk.gov.tr": "culture",
+  // TDK's dictionaries live on their own domain, not under tdk.gov.tr.
+  "sozluk.gov.tr": "culture",
+  "ktb.gov.tr": "culture",
+  "kutuphane.gov.tr": "culture",
+  "sanalmuze.gov.tr": "culture",
   "islamansiklopedisi.org.tr": "culture",
+  "ayk.gov.tr": "culture",
+  "akmb.gov.tr": "culture",
+  "yee.org.tr": "culture",
   "unesco.org": "culture",
   // entrepreneurship
   "kosgeb.gov.tr": "entrepreneurship",
+  "sanayi.gov.tr": "entrepreneurship",
+  "turkpatent.gov.tr": "entrepreneurship",
   "webrazzi.com": "entrepreneurship",
   "techcrunch.com": "entrepreneurship",
   "ycombinator.com": "entrepreneurship",
@@ -62,6 +93,7 @@ export const DICTIONARY = {
   "atam.gov.tr": "national_memory",
   "devletarsivleri.gov.tr": "national_memory",
   "millisaraylar.gov.tr": "national_memory",
+  "millikutuphane.gov.tr": "national_memory",
   "tbmm.gov.tr": "national_memory",
   // entertainment
   "youtube.com": "entertainment",
@@ -78,6 +110,8 @@ export const DICTIONARY = {
   "netflix.com": "entertainment",
   "disneyplus.com": "entertainment",
   "blutv.com": "entertainment",
+  "trtizle.com": "entertainment",
+  "tabii.com": "entertainment",
   "exxen.com": "entertainment",
   "spotify.com": "entertainment",
   "roblox.com": "entertainment",

@@ -104,8 +104,18 @@ test("parent sees the ready weekly report", async ({ page }) => {
   for (const reason of READY_REPORT.score.reasons) {
     await expect(page.getByText(reason)).toBeVisible();
   }
+  // The number, said in words: band, what it means, and the week in Turkish.
+  await expect(page.getByText("İyi", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Birlikte küçük bir hedef koymak/)).toBeVisible();
+  await expect(page.getByText("Dönem: 8–15 Eylül 2026")).toBeVisible();
+  await expect(page.getByText("Geçen haftaya göre 22 puan arttı (58 → 80).")).toBeVisible();
+
   await expect(page.getByText("Eğlence", { exact: true })).toBeVisible();
   await expect(page.getByText("120 dk")).toBeVisible();
+  // 40+15+20+10+0+5+120+0 = 210 minutes, and the busiest category leads the list.
+  await expect(page.getByText("Toplam: 3 sa 30 dk")).toBeVisible();
+  const categories = page.getByRole("region", { name: "Kategori dağılımı (dakika)" });
+  await expect(categories.getByRole("listitem").first()).toContainText("Eğlence");
   await expect(page.getByText("15 dakikalık bilim molası")).toBeVisible();
   await expect(page.getByText("Açık")).toBeVisible();
   await expect(page.getByText(READY_REPORT.share_text)).toBeVisible();
@@ -125,6 +135,28 @@ test("parent can switch youths", async ({ page }) => {
   await expect(page.getByText("80", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Riskli" }).click();
   await expect(page.getByText("38", { exact: true })).toBeVisible();
+});
+
+test("an extension day renders as one Turkish date, not a range", async ({ page }) => {
+  await mockLogin(page);
+  // What the extension actually posts: one UTC day, both ends the same.
+  await page.route("**/reports/weekly*", (route) =>
+    route.fulfill({
+      json: {
+        ...READY_REPORT,
+        period: "2026-09-20/2026-09-20",
+        score: { ...READY_REPORT.score, value: 34 },
+        distribution: { ...READY_REPORT.distribution, entertainment: 2, science: 0, arts: 0, sports: 0, culture: 0, national_memory: 0 },
+        trend: [{ period: "2026-09-20/2026-09-20", value: 34 }],
+      },
+    }),
+  );
+
+  await signIn(page, "/app/parent");
+  await expect(page.getByText("Dönem: 20 Eylül 2026")).toBeVisible();
+  await expect(page.getByText("Toplam: 2 dk")).toBeVisible();
+  await expect(page.getByText("Destek gerekli", { exact: true })).toBeVisible();
+  await expect(page.getByText("Karşılaştırma için ikinci bir haftaya ihtiyaç var.")).toBeVisible();
 });
 
 test("empty report (empty: true) shows the empty copy", async ({ page }) => {

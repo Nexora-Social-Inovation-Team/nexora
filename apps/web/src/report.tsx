@@ -22,6 +22,48 @@ function Skeleton() {
   );
 }
 
+/** The last two points, as the one sentence a parent actually wants. */
+function trendLine(trend: { period: string; value: number }[]): { key: string; vars: Record<string, number> } {
+  const [previous, current] = trend.slice(-2);
+  if (!current) return { key: "panel.trendSingle", vars: {} };
+  const delta = current.value - previous.value;
+  const vars = { delta: Math.abs(delta), from: previous.value, to: current.value };
+  if (delta === 0) return { key: "panel.trendFlat", vars };
+  return { key: delta > 0 ? "panel.trendUp" : "panel.trendDown", vars };
+}
+
+/** 210 minutes reads as "3 sa 30 dk"; under an hour stays in minutes. */
+function durationTr(minutes: number, hoursLabel: string, minutesLabel: string): string {
+  if (minutes < 60) return `${minutes} ${minutesLabel}`;
+  const rest = minutes % 60;
+  return rest === 0
+    ? `${Math.floor(minutes / 60)} ${hoursLabel}`
+    : `${Math.floor(minutes / 60)} ${hoursLabel} ${rest} ${minutesLabel}`;
+}
+
+/** docs/DESIGN.md: the score bands are `<50` / `50–79` / `≥80` — the same edges the API coach fallback uses. */
+function bandOf(value: number): "low" | "mid" | "high" {
+  return value < 50 ? "low" : value < 80 ? "mid" : "high";
+}
+
+/**
+ * `2026-09-08/2026-09-15` is a wire format, not something a parent reads.
+ * Turkish months, one year, and the month repeated only when the week crosses one.
+ */
+function periodTr(period: string): string {
+  const [from, to] = period.split("/");
+  const start = new Date(`${from}T00:00:00.000Z`);
+  const end = new Date(`${to}T00:00:00.000Z`);
+  if (Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) return period;
+  const opts = { timeZone: "UTC" } as const;
+  const full = new Intl.DateTimeFormat("tr-TR", { ...opts, day: "numeric", month: "long", year: "numeric" });
+  // The extension posts a single day (`2026-09-20/2026-09-20`), which must not read as "20–20".
+  if (from === to) return full.format(start);
+  return start.getUTCMonth() === end.getUTCMonth()
+    ? `${new Intl.DateTimeFormat("tr-TR", { ...opts, day: "numeric" }).format(start)}–${full.format(end)}`
+    : `${new Intl.DateTimeFormat("tr-TR", { ...opts, day: "numeric", month: "long" }).format(start)} – ${full.format(end)}`;
+}
+
 /*
   The bar sits under its own label, not beside it. Inline, the fixed w-44 label
   plus the value left about 80px on a phone, so a long bar wrapped to a line of
@@ -33,10 +75,16 @@ function DistributionBars({ distribution }: { distribution: Partial<Record<Categ
   const { t } = useTranslation();
   // The busiest category, not the sum — bars are drawn relative to the peak.
   const peak = Math.max(1, ...Object.values(distribution));
+  const total = Object.values(distribution).reduce((sum, minutes) => sum + minutes, 0);
+  // Biggest first: a fixed order buries the one category a parent came to see,
+  // and it puts the zeros at the bottom for free.
+  const ordered = [...CATEGORY_IDS].sort((a, b) => (distribution[b] ?? 0) - (distribution[a] ?? 0));
 
   return (
-    <ul className="mt-3 space-y-3">
-      {CATEGORY_IDS.map((id) => {
+    <>
+      <p className="mt-3 text-muted">{`${t("panel.totalLabel")}: ${durationTr(total, t("panel.hours"), t("panel.minutes"))}`}</p>
+      <ul className="mt-3 space-y-3">
+      {ordered.map((id) => {
         const minutes = distribution[id] ?? 0;
         return (
           <li key={id} className="space-y-1">
@@ -53,12 +101,15 @@ function DistributionBars({ distribution }: { distribution: Partial<Record<Categ
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </>
   );
 }
 
 function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) {
   const { t } = useTranslation();
+  const band = bandOf(report.score.value);
+  const trend = trendLine(report.trend);
 
   return (
     <>
@@ -68,7 +119,12 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
         </h2>
         <p className="mt-3 font-display text-7xl tabular-nums">{report.score.value}</p>
         <p className="text-muted">{t("panel.scoreOutOf")}</p>
-        <p className="mt-1 text-muted">{`${t("panel.periodLabel")}: ${report.period}`}</p>
+        {/* The number alone says nothing to a parent: the word and the sentence do. */}
+        <p className="mt-3 inline-block rounded-full border border-line bg-band px-3 py-1 text-sm font-medium">
+          {t(`panel.bands.${band}`)}
+        </p>
+        <p className="mt-2">{t(`panel.bandBody.${band}`)}</p>
+        <p className="mt-1 text-muted">{`${t("panel.periodLabel")}: ${periodTr(report.period)}`}</p>
         <h3 className="mt-5 text-lg">{t("panel.reasonsTitle")}</h3>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           {report.score.reasons.map((reason) => (
@@ -88,11 +144,8 @@ function Ready({ report }: { report: Extract<WeeklyReport, { empty: false }> }) 
         <h2 id="trend-title" className="text-xl">
           {t("panel.trendTitle")}
         </h2>
-        <ul className="mt-3 space-y-1">
-          {report.trend.map((point) => (
-            <li key={point.period}>{`${point.period} · ${point.value}`}</li>
-          ))}
-        </ul>
+        {/* Direction and difference, not two wire periods a parent has to subtract. */}
+        <p className="mt-2">{t(trend.key, trend.vars)}</p>
       </section>
 
       <section className={card} aria-labelledby="task-title">
@@ -226,11 +279,6 @@ export function WeeklyReportPanel() {
   );
 }
 
-/** docs/DESIGN.md: the score bands are `<50` / `50–79` / `≥80` — the same edges the API coach fallback uses. */
-function bandOf(value: number): "low" | "mid" | "high" {
-  return value < 50 ? "low" : value < 80 ? "mid" : "high";
-}
-
 /**
  * The teacher's default view: one class week, not one child's week.
  *
@@ -312,7 +360,7 @@ export function ClassReportPanel() {
                 <p className="mt-3 font-display text-7xl tabular-nums">{average}</p>
                 <p className="text-muted">{t("panel.class.average")}</p>
                 <p className="mt-1">{t("panel.class.support", { needs, total: rows.length })}</p>
-                <p className="mt-1 text-muted">{`${t("panel.periodLabel")}: ${ready[0].period}`}</p>
+                <p className="mt-1 text-muted">{`${t("panel.periodLabel")}: ${periodTr(ready[0].period)}`}</p>
               </section>
 
               <section className={card} aria-labelledby="class-distribution-title">
@@ -351,7 +399,7 @@ export function ClassReportPanel() {
                     <td className="py-2 tabular-nums">{row.report ? row.report.score.value : t("panel.dash")}</td>
                     <td className="py-2">
                       {row.report
-                        ? t(`panel.class.bands.${bandOf(row.report.score.value)}`)
+                        ? t(`panel.bands.${bandOf(row.report.score.value)}`)
                         : row.state === "waiting"
                           ? t("panel.class.waiting")
                           : row.state === "error"

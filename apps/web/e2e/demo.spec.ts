@@ -77,7 +77,8 @@ test("parent approves Deniz, the week lands, and the panel switcher shows 38 / 9
 
   await page.getByRole("button", { name: "Dengeli" }).click();
   await expect(score.getByText("80", { exact: true })).toBeVisible();
-  await expect(score.getByText(`Dönem: ${PERIOD}`)).toBeVisible();
+  // The wire period is `2026-09-08/2026-09-15`; the panel says it in Turkish.
+  await expect(score.getByText("Dönem: 8–15 Eylül 2026")).toBeVisible();
 
   const task = page.getByRole("region", { name: "Mikro-görev" });
   await expect(task.getByText("Tamamlandı")).toBeVisible();

@@ -163,6 +163,10 @@ Table: collected vs never (from [`PRIVACY.md`](PRIVACY.md), Turkish labels). Sec
 
 - Demo persona picker for the linked youth (dengeli / riskli / üretken) so the jury can switch without re-seeding by hand.
 - Weekly report: score, 3 reasons, distribution, trend (2 points is enough), current task status, `share_text`.
+- The score is never a bare number: band chip (`Destek gerekli` `<50` / `İzlenmeli` `50–79` / `İyi` `≥80`) and one plain sentence saying what it means, without diagnosing.
+- Trend is a sentence, not two wire periods: `Geçen haftaya göre 22 puan arttı (58 → 80).` One week only → `Karşılaştırma için ikinci bir haftaya ihtiyaç var.`
+- Distribution leads with the busiest category and carries a total in hours (`Toplam: 3 sa 30 dk`); zeros fall to the bottom by themselves.
+- Periods read in Turkish — `Dönem: 8–15 Eylül 2026`, never `2026-09-08/2026-09-15`.
 - Lightweight shared-goal suggestion: one sentence, not a full goal module.
 - Empty: `Bu hafta henüz özet yok.`
 - Error: retry.

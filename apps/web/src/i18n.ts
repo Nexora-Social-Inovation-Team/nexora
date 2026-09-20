@@ -140,6 +140,20 @@ export const tr = {
     periodLabel: "Dönem",
     scoreTitle: "Bu haftaki denge",
     scoreOutOf: "100 üzerinden",
+    /* One band vocabulary for both panels. docs/DESIGN.md: <50 / 50-79 / >=80. */
+    bands: { low: "Destek gerekli", mid: "İzlenmeli", high: "İyi" },
+    /* What the number means, in a parent's words. No diagnosis, no verdict. */
+    bandBody: {
+      low: "Bu hafta zorlanmış olabilir. Yargılamadan sormak, kısıtlamaktan daha iyi çalışır.",
+      mid: "Denge fena değil. Değerli kategorilerde biraz daha zaman iyi gelir.",
+      high: "Bu hafta denge iyi görünüyor. Birlikte küçük bir hedef koymak için uygun bir zaman.",
+    },
+    totalLabel: "Toplam",
+    hours: "sa",
+    trendUp: "Geçen haftaya göre {{delta}} puan arttı ({{from}} → {{to}}).",
+    trendDown: "Geçen haftaya göre {{delta}} puan azaldı ({{from}} → {{to}}).",
+    trendFlat: "Geçen haftaya göre değişmedi ({{to}}).",
+    trendSingle: "Karşılaştırma için ikinci bir haftaya ihtiyaç var.",
     reasonsTitle: "Neden böyle?",
     distributionTitle: "Kategori dağılımı (dakika)",
     minutes: "dk",
@@ -160,7 +174,6 @@ export const tr = {
       rosterTitle: "Öğrenciler",
       rosterCaption: "Sınıftaki üç demo öğrencinin haftalık durumu",
       columns: { youth: "Öğrenci", score: "Skor", band: "Durum", task: "Mikro-görev" },
-      bands: { low: "Destek gerekli", mid: "İzlenmeli", high: "İyi" },
       waiting: "Veli onayı bekliyor",
       noData: "Özet yok",
       rowError: "Alınamadı",

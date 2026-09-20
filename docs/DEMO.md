@@ -106,7 +106,7 @@ are identical. That read-back is both the idempotency proof and your pre-demo ch
 | **1:00** | Web `/` | Open the landing page. | `"Ham URL yok. Mesaj yok. Arama kaydı yok."` and the three role cards under `"Kim ne görür?"`. |
 | **1:40** | Web `/app/parent` | Log in as `"Ece (Veli)"`, stay on `"Dengeli"`, press `"Onayla"`. | The panel's own `"Veli onayı bekleniyor"` card, then the button `"Onayla"`. Same sentence the extension just got, now with a button under it. |
 | **2:10** | Extension → terminal | Press `"Şimdi gönder"` again, then `"Duraklat"`. Run `bun run demo:ingest-balanced` in the spare terminal. | `"Özet gönderildi. Skorun: …"` — real browsing minutes, scored. Then the terminal loads the canonical week so the rest of the demo is the DESIGN numbers, not today's browsing. |
-| **2:40** | Web `/app/parent` | Press `"Riskli"`, `"Üretken"`, then back to `"Dengeli"` — switching refetches. Never reload the page: the demo session lives in memory and a reload logs Ece out. Read the three reasons aloud. | **80** under `"Bu haftaki denge"`, `"Dönem: 2026-09-08/2026-09-15"`, the distribution bars — then **38**, **93**, **80**. The number is a mirror, not a grade. |
+| **2:40** | Web `/app/parent` | Press `"Riskli"`, `"Üretken"`, then back to `"Dengeli"` — switching refetches. Never reload the page: the demo session lives in memory and a reload logs Ece out. Read the three reasons aloud. | **80** under `"Bu haftaki denge"`, the band chip `"İyi"` and the sentence under it, `"Dönem: 8–15 Eylül 2026"`, then the bars with `"Toplam: 3 sa 30 dk"` — then **38**, **93**, **80**. The number is a mirror, not a grade, and the panel says so in words before it says it in digits. |
 | **3:40** | Web `/app/teacher` | `"Çıkış"`, then log in as `"Mert (Öğretmen)"`. | **70** and `"sınıf ortalaması"`, `"Destek gerektiren: 1 / 3 öğrenci"`, the roster's `"Destek gerekli"` next to `"Riskli"`, and `"Bu hafta sınıfla"`. Same data, one level up — still no link, no student name. |
 | **4:30** | Expo | Press `"Katıl"`. Deniz is approved now, so the app lands straight on the score. | `"Bu haftaki dengen"` and **80**, with the same three reasons the parent just read. |
 | **5:15** | Expo | Scroll to the coach, press `"Görevi tamamladım"`. | The three tips, the task's `eta_minutes`, then the badge `"Değerli adım"`. |
@@ -126,6 +126,72 @@ quietly replacing the 80 halfway through beat 6.
 `"Katıl"` there: Deniz is still `pending_parent_consent`, so the app shows
 `"Veli onayı bekleniyor"` and `"Durumu yenile"` brings him in after the approval. It costs one extra
 hop between surfaces; the extension already tells that part of the story.
+
+## Questions the jury asks
+
+Answers that are true, in the order they usually come. Each one names where the claim lives, so a
+follow-up question has somewhere to go.
+
+**"What are those three tabs — three modes of the same child?"**
+No: three seeded accounts, `usr_deniz` / `usr_deniz_risky` / `usr_deniz_productive`, all linked to
+Ece (`parentId: "usr_ece"`). The same fictional Deniz in three different weeks. They exist because
+the score is a **rule, not a model**, and a rule only proves itself when you change the input: live,
+those three weeks would take three weeks of browsing. Same formula, three results —
+`50 + 30×valuable − 40×harmful − 20×(entertainment−0.5)/0.5 + 5×diversity`:
+
+| Tab | The week | Score | Why |
+|---|---|---|---|
+| `Dengeli` | 120 dk entertainment, 90 dk valuable | **80** | valuable 43%, four categories over 10 dk, no harmful |
+| `Riskli` | 200 dk entertainment, 40 dk harmful | **38** | entertainment 80% (−12), harmful 16% (−6.4) |
+| `Üretken` | 125 dk valuable, 40 dk entertainment | **93** | valuable 76% (+22.7), entertainment under the threshold |
+
+Those three numbers are unit-test fixtures (`packages/score/src/index.test.ts`), not screenshots.
+Switching also changes the coach band (`<50` / `50–79` / `≥80`), and the risk sentence
+`"Zararlı veya manipülatif kategoride süre var; bunu bir yetişkinle konuşmak iyi olabilir."` appears
+only on `Riskli`.
+
+**"So a parent can see other people's children?"**
+No. `canReadYouth` opens a youth to a parent only when `youth.parentId === user.id`. All three are
+Ece's in the seed — demo data, not a permission. A teacher is scoped to the demo class ids, and the
+consent button is parent-only: Mert calling `/consent/parent/approve` gets `403 forbidden`
+(`docs/ARCHITECTURE.md` AuthZ matrix, tested in `02-identity-consent`).
+
+**"Is this real data?"**
+The three weeks are seeded. The live path is beat 0 and beat 4: the extension counts what you
+actually browsed and posts it, and the panel shows that day immediately — one UTC day, cumulative
+category minutes, nothing else.
+
+**"Do you read browsing history?"**
+No. The extension reads the active tab's hostname, maps it to a category **on device**, and drops
+it. `chrome.storage.local` holds seconds per category and flags — no url, hostname, tab id or title,
+and failure bodies are never logged. The API refuses a payload with a URL-ish key at any depth
+before it validates anything else (`findForbiddenKey`), and `GET /reports/weekly` has no hostname
+field to leak. That is the `/privacy` table, and it is the honest half of the demo: the
+`"Asla toplanmaz"` column is longer than the other one.
+
+**"Is the score an AI judgment about my child?"**
+No. Score v0.5 is rules only — no ML, no LLM, no network — which is why it can be written on a
+whiteboard. The only model in the product is the coach, and its output is schema-validated; invalid
+or unsafe output falls back to canned Turkish JSON with `X-Nexora-Coach: fallback`. Nothing in the
+product diagnoses; the risk wording offers support and an adult to talk to.
+
+**"What if your model is down during the demo?"**
+It changes nothing on screen — say `"güvenli yedek yanıt"`. A demo that survives its LLM is the
+point, and the fallback still differs per band.
+
+**"Can the parent take it back?"**
+`POST /consent/parent/revoke` sets the account to `revoked`, stops new processing, and opens a
+deletion request row; the policy is deletion within **30 days**. Phase A implements the endpoint and
+the row — say that plainly, and do not claim the erasure job itself is automated.
+
+**"Only three students in a class?"**
+Yes, and deliberately: Phase A has no `Class` model and no class endpoint. The teacher panel
+aggregates the same `GET /reports/weekly` once per demo youth. What it proves is the shape — class
+average, who needs support, one activity — not the scale.
+
+**"Where is the data stored?"**
+Neon Postgres and Cloudflare Workers. Region and KVKK residency are **not** decided in this repo, so
+answer with whatever you have actually chosen — do not improvise a region on stage.
 
 ## If something breaks
 

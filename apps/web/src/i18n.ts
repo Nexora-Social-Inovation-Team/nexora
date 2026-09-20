@@ -119,6 +119,7 @@ export const tr = {
     nav: { report: "Rapor", privacy: "Gizlilik", logout: "Çıkış" },
     roles: { parent: "Veli", teacher: "Öğretmen" },
     youthLabel: "Genç",
+    dash: "—",
     youths: [
       { id: "usr_deniz", label: "Dengeli" },
       { id: "usr_deniz_risky", label: "Riskli" },
@@ -150,6 +151,28 @@ export const tr = {
     shareTitle: "Velinle paylaşılacak özet",
     goalTitle: "Birlikte hedef",
     goal: "Bu hafta birlikte tek bir hedef seçin: değerli kategorilerde 30 dakika.",
+    /* Teacher-only copy. The class is the three demo youths above — labels, never names. */
+    class: {
+      summaryTitle: "Sınıfın haftası",
+      average: "sınıf ortalaması",
+      support: "Destek gerektiren: {{needs}} / {{total}} öğrenci",
+      distributionTitle: "Sınıf kategori dağılımı (dakika)",
+      rosterTitle: "Öğrenciler",
+      rosterCaption: "Sınıftaki üç demo öğrencinin haftalık durumu",
+      columns: { youth: "Öğrenci", score: "Skor", band: "Durum", task: "Mikro-görev" },
+      bands: { low: "Destek gerekli", mid: "İzlenmeli", high: "İyi" },
+      waiting: "Veli onayı bekliyor",
+      noData: "Özet yok",
+      rowError: "Alınamadı",
+      empty: "Bu hafta sınıf için henüz özet yok.",
+      emptyHint: "Öğrencilerin özetleri geldikçe sınıf ortalaması burada oluşur.",
+      activityTitle: "Bu hafta sınıfla",
+      activities: {
+        harmful: "20 dakikalık medya okuryazarlığı atölyesi: “Bu kaynağı kim yazdı, neden yazdı?”",
+        entertainment: "20 dakikalık atölye: bir eğlence içeriğini sınıfça kaynağına kadar takip edin.",
+        balanced: "20 dakikalık atölye: sınıfın en çok vakit ayırdığı kategoriden küçük bir üretim çıkarın.",
+      },
+    },
   },
 } as const;
 

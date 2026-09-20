@@ -30,14 +30,18 @@ Minutes: [`../DESIGN.md`](../DESIGN.md) table.
 
 ## Jury script (5–7 min)
 
-1. **0:00** Landing `/` — point at “Ham URL yok”.
-2. **0:40** Expo: Deniz onboarding → waiting for parent.
-3. **1:20** Web: login Ece → approve Deniz.
-4. **2:00** Expo: score appears (after ingest). Read 3 reasons aloud. Mention the number is a mirror.
-5. **3:00** Expo: coach 3 tips + 1 task. Complete task → badge.
-6. **4:00** Web parent report: score, distribution, task `completed`, `share_text`. Toggle risky vs productive to show different scores.
-7. **5:30** Privacy `/privacy` table. Optional: show extension popup with category totals, no URL list.
-8. **6:30** Stop. Do not open admin, Kubernetes, or model cards.
+Order: **extension → web → phone**, the way the product works. Full runbook: [`../DEMO.md`](../DEMO.md).
+
+1. **0:00** Extension popup: category bars, no URL anywhere. `Şimdi gönder` → `Veli onayı olmadan bu işlem yapılamaz.`
+2. **1:00** Landing `/` — point at “Ham URL yok”.
+3. **1:40** Web: login Ece → approve Deniz.
+4. **2:10** Extension: `Şimdi gönder` succeeds, then `Duraklat`. Run `bun run demo:ingest-balanced` for the canonical week.
+5. **2:40** Web parent report: 80, 3 reasons, distribution. Toggle risky vs productive (38 / 93). Mention the number is a mirror.
+6. **3:40** Web teacher panel: class average, who needs support, class activity. Same data one level up.
+7. **4:30** Expo: score appears with the same three reasons.
+8. **5:15** Expo: coach 3 tips + 1 task. Complete task → badge.
+9. **6:00** Web parent: task `Tamamlandı` + `share_text`. Then `/privacy` table.
+10. **6:45** Stop. Do not open admin, Kubernetes, or model cards.
 
 If HF is down, say “güvenli yedek yanıt” and continue — fallback is a feature.
 
@@ -50,5 +54,6 @@ After seed + ingest, `GET /coach/recommendation` for each persona/band returns v
 - [ ] `db:seed` is idempotent.
 - [ ] Three scores match the DESIGN bands (±1).
 - [ ] Completing the Expo task flips report `task.status`.
+- [ ] The teacher panel reads the same week as a class: average, support count, per-student band.
 - [ ] Someone not on the team can follow the script without a hidden wiki.
 - [ ] Critical E2E: login, approve, report, complete task — automated where possible (Playwright against web + API).

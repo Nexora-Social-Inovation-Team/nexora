@@ -170,7 +170,20 @@ Table: collected vs never (from [`PRIVACY.md`](PRIVACY.md), Turkish labels). Sec
 
 ### Teacher panel `/app/teacher`
 
-Same report block. Header: `Sınıf özeti (demo)` instead of `Çocuğunun haftası`. MVP may show a single demo youth as the class example. Do not build a 50-row student table.
+Not the parent report with a different header — the teacher's default view is the
+aggregated class insight `PRODUCT.md` promises. Header: `Sınıf özeti (demo)`.
+
+- Class week card: average score over the students who have a week, `Destek gerektiren: 1 / 3 öğrenci`, period.
+- Class category distribution: the same bars as the parent panel, minutes summed across the class.
+- Roster: one compact row per demo student — label (`Dengeli` / `Riskli` / `Üretken`), score, band (`Destek gerekli` `<50` / `İzlenmeli` `50–79` / `İyi` `≥80`), task status. A student still waiting on consent shows `Veli onayı bekliyor` and is left out of the average.
+- One class activity line, picked from the class distribution (media literacy when harmful minutes exist).
+- Empty: `Bu hafta sınıf için henüz özet yok.` Error: retry.
+- KVKK strip, same as the parent panel.
+
+No youth switcher, no `share_text`, no `Birlikte hedef` — those are parent copy.
+The class is the three demo youths; **do not build a 50-row student table**, no
+student names, no hostnames. Read via `GET /reports/weekly?youthId=` once per
+student — no class endpoint in Phase A.
 
 ## Visual tokens
 

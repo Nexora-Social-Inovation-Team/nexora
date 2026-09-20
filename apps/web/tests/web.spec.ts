@@ -182,26 +182,92 @@ test("consent_missing shows the approve button, which approves and renders the r
   await expect(page.getByText("80", { exact: true })).toBeVisible();
 });
 
-test("teacher route renders the class label without an approve button", async ({ page }) => {
-  await mockLogin(page);
-  await page.route("**/reports/weekly*", (route) =>
-    route.fulfill({ status: 403, json: apiError("consent_missing", "Veli onayı olmadan bu işlem yapılamaz.") }),
-  );
+/** The three demo youths the teacher reads, at the DESIGN.md persona scores. */
+const CLASS_REPORTS: Record<string, unknown> = {
+  usr_deniz: READY_REPORT,
+  usr_deniz_risky: {
+    ...READY_REPORT,
+    youthId: "usr_deniz_risky",
+    score: { ...READY_REPORT.score, value: 38 },
+    distribution: { ...READY_REPORT.distribution, entertainment: 200, harmful: 40 },
+  },
+  usr_deniz_productive: {
+    ...READY_REPORT,
+    youthId: "usr_deniz_productive",
+    score: { ...READY_REPORT.score, value: 93 },
+    task: { ...READY_REPORT.task, status: "completed" },
+  },
+};
 
-  await signIn(page, "/app/teacher");
-  await expect(page.getByRole("heading", { name: "Sınıf özeti (demo)" })).toBeVisible();
-  await expect(page.getByText("Veli onayı bekleniyor")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Onayla" })).toHaveCount(0);
-});
+/** Serves each youth its own report; `only` forces one youth to a different outcome. */
+async function mockClass(page: Page, only?: { youthId: string; status: number; json: unknown }) {
+  await page.route("**/reports/weekly*", (route) => {
+    const youthId = new URL(route.request().url()).searchParams.get("youthId") ?? "";
+    return youthId === only?.youthId
+      ? route.fulfill({ status: only.status, json: only.json })
+      : route.fulfill({ json: CLASS_REPORTS[youthId] ?? EMPTY_REPORT });
+  });
+}
 
-test("teacher route shows the ready report chrome", async ({ page }) => {
+test("teacher sees the class summary, not one child's report", async ({ page }) => {
   await mockLogin(page);
-  await page.route("**/reports/weekly*", (route) => route.fulfill({ json: READY_REPORT }));
+  await mockClass(page);
 
   await signIn(page, "/app/teacher");
   await expect(page.getByRole("heading", { name: "Sınıf özeti (demo)" })).toBeVisible();
   await expect(page.getByText("Öğretmen")).toBeVisible();
-  await expect(page.getByText("80", { exact: true })).toBeVisible();
+
+  // (80 + 38 + 93) / 3 = 70, and only the risky youth is under the support band.
+  await expect(page.getByText("70", { exact: true })).toBeVisible();
+  await expect(page.getByText("sınıf ortalaması")).toBeVisible();
+  await expect(page.getByText("Destek gerektiren: 1 / 3 öğrenci")).toBeVisible();
+
+  const roster = page.getByRole("table");
+  await expect(roster.getByRole("row", { name: /Riskli.*38.*Destek gerekli/ })).toBeVisible();
+  await expect(roster.getByRole("row", { name: /Dengeli.*80.*İyi/ })).toBeVisible();
+  await expect(roster.getByRole("row", { name: /Üretken.*93.*İyi.*Tamamlandı/ })).toBeVisible();
+
+  // Harmful minutes in the class pick the media-literacy activity.
+  await expect(page.getByText(/medya okuryazarlığı atölyesi/)).toBeVisible();
+  await expect(page.getByText("Bu panelde tam bağlantı veya alan adı gösterilmez.")).toBeVisible();
+
+  // Parent-only surfaces stay on the parent panel.
+  await expect(page.getByRole("button", { name: "Onayla" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Riskli" })).toHaveCount(0);
+  await expect(page.getByText("Birlikte hedef")).toHaveCount(0);
+  await expect(page.getByText(READY_REPORT.share_text)).toHaveCount(0);
+});
+
+test("a youth still waiting on consent drops out of the class average", async ({ page }) => {
+  await mockLogin(page);
+  await mockClass(page, {
+    youthId: "usr_deniz_risky",
+    status: 403,
+    json: apiError("consent_missing", "Veli onayı olmadan bu işlem yapılamaz."),
+  });
+
+  await signIn(page, "/app/teacher");
+  await expect(page.getByRole("table").getByRole("row", { name: /Riskli.*Veli onayı bekliyor/ })).toBeVisible();
+  // (80 + 93) / 2 = 87 (rounded), and nobody is left under the support band.
+  await expect(page.getByText("87", { exact: true })).toBeVisible();
+  await expect(page.getByText("Destek gerektiren: 0 / 3 öğrenci")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Onayla" })).toHaveCount(0);
+});
+
+test("signing in as the other persona lands on that persona's panel", async ({ page }) => {
+  await mockLogin(page);
+  await mockClass(page);
+
+  await page.goto("/app/teacher");
+  // The submit stays disabled until hydration; picking before that, React resets the select.
+  const submit = page.getByRole("button", { name: "Giriş yap" });
+  await expect(submit).toBeEnabled();
+  await page.getByLabel("Rol").selectOption("ece");
+  await submit.click();
+
+  await expect(page).toHaveURL(/\/app\/parent$/);
+  await expect(page.getByRole("heading", { name: "Çocuğunun haftası" })).toBeVisible();
+  await expect(page.getByText("Veli", { exact: true })).toBeVisible();
 });
 
 const wcag = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -214,6 +280,16 @@ test("landing has no WCAG 2.1 AA violations", async ({ page }) => {
 
 test("privacy has no WCAG 2.1 AA violations", async ({ page }) => {
   await page.goto("/privacy");
+  const { violations } = await new AxeBuilder({ page }).withTags(wcag).analyze();
+  expect(violations).toEqual([]);
+});
+
+test("class summary has no WCAG 2.1 AA violations", async ({ page }) => {
+  await mockLogin(page);
+  await mockClass(page);
+
+  await signIn(page, "/app/teacher");
+  await expect(page.getByText("sınıf ortalaması")).toBeVisible();
   const { violations } = await new AxeBuilder({ page }).withTags(wcag).analyze();
   expect(violations).toEqual([]);
 });

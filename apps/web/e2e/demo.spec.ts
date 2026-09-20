@@ -85,4 +85,21 @@ test("parent approves Deniz, the week lands, and the panel switcher shows 38 / 9
 
   // 5:30 the privacy promise stays on the screen the parent is looking at.
   await expect(page.getByText("Bu panelde tam bağlantı veya alan adı gösterilmez.")).toBeVisible();
+
+  // ------------------------------------------------- 3:40 the teacher panel
+  // The same three weeks one level up: (80 + 38 + 93) / 3 = 70, and only the
+  // risky youth sits under the support band. Mert can read the class but can
+  // never approve — the button must not exist on his panel at all.
+  await page.getByRole("button", { name: "Çıkış" }).click();
+  await page.goto("/app/teacher");
+  const signIn = page.getByRole("button", { name: "Giriş yap" });
+  await expect(signIn).toBeEnabled();
+  await page.getByLabel("Rol").selectOption("mert");
+  await signIn.click();
+
+  const classWeek = page.getByRole("region", { name: "Sınıfın haftası" });
+  await expect(classWeek.getByText("70", { exact: true })).toBeVisible();
+  await expect(classWeek.getByText("Destek gerektiren: 1 / 3 öğrenci")).toBeVisible();
+  await expect(page.getByRole("row", { name: /Riskli.*38.*Destek gerekli/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Onayla" })).toHaveCount(0);
 });

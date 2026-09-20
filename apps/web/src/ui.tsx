@@ -168,18 +168,12 @@ export function PublicPage({ children }: { children: ReactNode }) {
   );
 }
 
-export function AppShell({
-  role,
-  title,
-  children,
-}: {
-  role: "parent" | "teacher";
-  title: string;
-  children: ReactNode;
-}) {
+export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation();
-  const { signOut } = useSession();
+  // The badge follows the session, not the route: a parent on /app/teacher used to read "Öğretmen".
+  const { user, signOut } = useSession();
   const navigate = useNavigate();
+  const teacher = user?.role === "teacher";
   return (
     <div className={`${container} flex flex-col gap-10 py-8 sm:flex-row`}>
       {/* A column of five stacked links ate the top of every phone screen. */}
@@ -192,9 +186,9 @@ export function AppShell({
           {t("brand")}
         </Link>
         <p className="rounded-full border border-line bg-band px-3 py-1 text-sm font-medium">
-          {role === "parent" ? t("panel.roles.parent") : t("panel.roles.teacher")}
+          {teacher ? t("panel.roles.teacher") : t("panel.roles.parent")}
         </p>
-        <Link to={role === "parent" ? "/app/parent" : "/app/teacher"} className={navLink}>
+        <Link to={teacher ? "/app/teacher" : "/app/parent"} className={navLink}>
           {t("panel.nav.report")}
         </Link>
         <Link to="/privacy" className={navLink}>

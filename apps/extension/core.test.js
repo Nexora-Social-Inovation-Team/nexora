@@ -666,7 +666,13 @@ describe("static privacy scan", () => {
     expect(manifest.content_scripts).toBeUndefined();
     expect(manifest.web_accessible_resources).toBeUndefined();
     expect(manifest.permissions).toEqual(["tabs", "storage", "alarms", "idle"]);
-    expect(manifest.host_permissions).toEqual(["http://localhost:3000/*"]);
+    // Two concrete API origins, local and deployed. Never a wildcard host: the
+    // extension may talk to its own API and to nothing else.
+    expect(manifest.host_permissions).toEqual([
+      "http://localhost:3000/*",
+      "https://nexora-api.burakosman-yaldiz.workers.dev/*",
+    ]);
+    for (const host of manifest.host_permissions) expect(host).not.toMatch(/\*\./);
   });
 });
 

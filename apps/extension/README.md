@@ -72,6 +72,12 @@ pending or revoked youth cannot turn midnight into a daily retry. Failure bodies
 2. **Load unpacked** → pick `apps/extension`.
 3. Open the extension **Options** page, set the API address (default `http://localhost:3000`) and paste a token.
 
+`host_permissions` holds exactly two concrete origins — the local API and the deployed one
+(`https://nexora-api.burakosman-yaldiz.workers.dev`) — so **API adresi** may be either, and nothing else.
+Pointing it anywhere else needs that origin in the manifest first. Requests leave the extension's own
+context, which carries cross-origin privileges for granted hosts, so the API's `WEB_ORIGIN`
+allow-list (browsers, cookies) does not apply to them: the bearer token is the whole authorisation.
+
 ## Get a token
 
 Start the API (`bun run --filter nexora-api dev`), then:
@@ -80,8 +86,30 @@ Start the API (`bun run --filter nexora-api dev`), then:
 curl -s -X POST http://localhost:3000/auth/login -H "content-type: application/json" -d '{"persona":"deniz_risky"}'
 ```
 
+Against the deployed API, mint it there instead — a token is signed with that deployment's
+`SESSION_SECRET`, so a local token will not open the Worker and vice versa:
+
+```bash
+curl -s -X POST https://nexora-api.burakosman-yaldiz.workers.dev/auth/login   -H "content-type: application/json" -d '{"persona":"deniz"}'
+```
+
+On Windows PowerShell use `(Invoke-RestMethod -Method Post -Uri "<api>/auth/login" -ContentType
+"application/json" -Body '{"persona":"deniz"}').token | Set-Clipboard` — `curl` there is an alias
+for `Invoke-WebRequest` and rejects the flags above.
+
 Copy `token` from the response into the options page. The youth must be **active** (a parent
-approved consent) or the popup answers `Veli onayı olmadan bu işlem yapılamaz.`
+approved consent) or the popup answers `Veli onayı olmadan bu işlem yapılamaz.` Use persona `deniz`
+instead when you *want* that refusal on screen — he is seeded pending, so the gate is the demo.
+
+It has to be a **youth** token: `POST /signals/category-summary` is self-only, so Ece's or Mert's
+token answers `403 forbidden`. The token is the same string the web panel carries in its
+`nexora_session` cookie, HS256 over `{ uid, exp }`, and it is valid for **seven days** — mint it the
+night before and it will still work in the room. Restarting the API with a different
+`SESSION_SECRET` invalidates it, and the popup then says
+`Oturum anahtarı geçersiz. Ayarlardan yeni bir anahtar gir.`
+
+`apiBase` and `token` live in `chrome.storage.sync`, so they survive a reload of the unpacked
+extension — and `apiBase` must stay inside `host_permissions` (`http://localhost:3000/*`).
 
 ## Popup
 

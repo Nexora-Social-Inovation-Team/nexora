@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { WeeklyReportPanel } from "../report";
 import { AppShell, DemoLogin, useSession } from "../ui";
@@ -10,10 +10,11 @@ function ParentPanel() {
   const { user } = useSession();
 
   if (!user) return <DemoLogin defaultPersona="ece" />;
+  if (user.role === "teacher") return <Navigate to="/app/teacher" />;
 
   return (
-    <AppShell role="parent" title={t("panel.parentTitle")}>
-      <WeeklyReportPanel canApprove={user.role === "parent" || user.role === "admin"} />
+    <AppShell title={t("panel.parentTitle")}>
+      <WeeklyReportPanel />
     </AppShell>
   );
 }

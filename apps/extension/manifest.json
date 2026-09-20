@@ -10,7 +10,8 @@
     "idle"
   ],
   "host_permissions": [
-    "http://localhost:3000/*"
+    "http://localhost:3000/*",
+    "https://nexora-api.burakosman-yaldiz.workers.dev/*"
   ],
   "background": {
     "service_worker": "background.js",

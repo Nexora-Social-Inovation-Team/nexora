@@ -31,7 +31,7 @@ export const tr = {
     sub: "13–18 yaş için yerli sosyal yapay zekâ. Yasaklamadan, yargılamadan.",
     trust: "Ham URL yok. Mesaj yok. Arama kaydı yok.",
     cta: "Nasıl çalışır?",
-    ctaSecondary: "Veli paneli (demo)",
+    ctaSecondary: "Veli ve öğretmen paneli (demo)",
     cardsEyebrow: "ROLLER",
     cardsTitle: "Kim ne görür?",
     cards: [

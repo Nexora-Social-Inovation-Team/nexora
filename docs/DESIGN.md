@@ -136,7 +136,7 @@ Hero:
 - Sub: `13–18 yaş için yerli sosyal yapay zekâ. Yasaklamadan, yargılamadan.`
 - Trust: `Ham URL yok. Mesaj yok. Arama kaydı yok.` — now in the navy announcement
   strip above the nav, so it shows on every public page instead of the hero only.
-- CTA: `Nasıl çalışır?` → `/how-it-works`. Secondary: `Veli paneli (demo)` → login.
+- CTA: `Nasıl çalışır?` → `/how-it-works`. Secondary: `Veli ve öğretmen paneli (demo)` → login. One button for both panels: the login's role select decides, and the panel routes redirect to the one that matches the session.
 
 Three cards, under eyebrow `ROLLER` + heading `Kim ne görür?`:
 
